@@ -141,6 +141,13 @@ def check_user_id(data):
     text_output += 'Is user_id sequential: ' + str(is_sequential) + '\n'
     save_to_file('report.txt', text_output)
 
+#Check how many users ids are not unique
+def check_unique_user_id(data):
+    text_output = '##############################################\n'
+    text_output += 'Check users made more then one transanction \n'
+    text_output += '##############################################\n'
+    text_output += 'Number of user more one transactions: ' + str((len(data) - data['user_id'].nunique())) + '\n'
+    save_to_file('report.txt', text_output)
 
 # Get the descriptive statistics for categorical columns
 def descriptive_statistics_categorical(data):
@@ -312,6 +319,8 @@ if __name__ == '__main__':
     descriptive_statistics_numerical(data_fraud)
     # Check user_id sequence
     check_user_id(data_fraud)
+    # Check unique user_id
+    check_unique_user_id(data_fraud)
     # Descriptive statistics categorical
     descriptive_statistics_categorical(data_fraud)
     # Check datetime format
