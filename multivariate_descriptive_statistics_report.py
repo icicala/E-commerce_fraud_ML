@@ -1,5 +1,8 @@
 import pandas as pd
 import os
+import numpy as np
+import scipy.stats as stats
+from scipy.stats.contingency import association
 
 def save_to_file(filename, text):
     with open(filename, 'a') as file:
@@ -163,6 +166,31 @@ def relation_categorical_datetime(data):
 
     # Save the output to a file
     save_to_file('report.txt', text_output)
+
+
+# cross tabulation between categorical features and label
+def cross_tabulation_categorical_features_and_label(data):
+    text_output = '##############################################\n'
+    text_output += '##### Cross tabulation categorical features with label ####\n'
+    text_output += '##############################################\n'
+    pd.set_option('display.max_columns', None)
+    pd.set_option('display.float_format', lambda x: '%.0f' % x)
+    # display all the raws
+    pd.set_option('display.max_rows', None)
+    column_features = data[['sex', 'browser', 'source']]
+    # cross tabulation between categorical features and label
+    for cat_column in column_features:
+        data_tab = pd.crosstab(index=data[cat_column], columns=data['class'])
+        text_output += str(data_tab) + '\n'
+
+    # Save the output to a file
+    save_to_file('report.txt', text_output)
+
+
+
+
+
+
 #initialize the python script
 if __name__ == '__main__':
     # load dataset
@@ -181,6 +209,9 @@ if __name__ == '__main__':
     # count users by device_id
     #count_users_with_multiple_devices(data)
     # relation between categorical features and datetime features
-    relation_categorical_datetime(data)
+    #relation_categorical_datetime(data)
+    # cross tabulation between categorical features and label
+    #cross_tabulation_categorical_features_and_label(data)
+    # Cramer's V statistic for categorical variable and class
 
 
