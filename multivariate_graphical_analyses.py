@@ -5,6 +5,8 @@ import pandas as pd
 import os
 from scipy.stats import pointbiserialr
 from scipy.stats.contingency import association
+import scipy.stats as stats
+
 
 from pandas.plotting import autocorrelation_plot
 from scipy import fft
@@ -261,7 +263,7 @@ def cramer_v_categorical_device_id(data):
         # Map device_id to numeric values
         data_mapped, device_id_mapping = map_device_id(data)
         # create contingency table for device_id and class columns
-        contingency_table = pd.crosstab(data_mapped['device_id_numeric'], data_mapped['class'])
+        contingency_table = pd.crosstab(data_mapped['device_id'], data_mapped['class'])
         # Calculate Cramer's V
         cramer_v_value = association(contingency_table.values, method='cramer')
         # Create a histogram
@@ -278,6 +280,88 @@ def cramer_v_categorical_device_id(data):
         plt.legend(title='Class', loc='upper right', labels=['Fraud', 'Not Fraud'])
     # Save plot as PNG using the save_plot_as_png function
     save_plot_as_png(plot_function, 'histogram_categorical_device_id')
+
+#  Horizontal stacked bar chart and cramer's V of categorical country and class column
+def cramer_v_categorical_country(data):
+    contingency_table = pd.crosstab(data['country'], data['class'])
+    cramer_v_value = association(contingency_table.values, method='cramer')
+
+    sorted_countries = contingency_table.sum(axis=1).sort_values(ascending=False)
+
+    top_countries = sorted_countries.head(30)
+
+    other_countries = sorted_countries.tail(len(sorted_countries) - 30).index
+    other_sum = contingency_table.loc[other_countries].sum()
+    contingency_table = contingency_table.loc[top_countries.index]
+    contingency_table.loc['Other'] = other_sum
+
+    # Rename 'class' column to avoid conflicts
+    contingency_table = contingency_table.rename(columns={0: 'Not Fraud', 1: 'Fraud'})
+    print(contingency_table)
+    # invert the order of the rows
+    contingency_table = contingency_table.iloc[::-1]
+
+    def plot_function():
+        # plot the contingency table as count plot
+        contingency_table.plot(kind='barh', stacked=True, figsize=(15, 8), color=['grey', 'coral'])
+        # Set the title with Cramer's V value
+        plt.title(f'Horizontal Stacked Bar Chart of Country and Class\nCramer\'s V: {cramer_v_value:.4f}')
+        # Set x-axis label
+        plt.xlabel('Count')
+        # Set y-axis label
+        plt.ylabel('Country')
+        # Show the legend
+        plt.legend(title='Class', loc='lower right', labels=['Not Fraud', 'Fraud'])
+
+
+    # Save plot as PNG using the save_plot_as_png function
+    save_plot_as_png(plot_function, 'horizontal_stacked_bar_chart_country')
+
+# Box plot between browser and age
+def boxplot_browser_age(data):
+    def plot_function():
+        # Set up the figure
+        plt.figure(figsize=(12, 8))
+        # Create boxplot
+        sns.boxplot(data=data, x='browser', y='age', hue='class', palette='gray')
+        # Set the title
+        plt.title('Boxplot of Browser and Age')
+        # Set x-axis label
+        plt.xlabel('Browser')
+        # Set y-axis label
+        plt.ylabel('Age')
+        # Show the legent with class meaning 0: Not Fraud, 1: Fraud
+        plt.legend(title='Class', loc='upper right', labels=['Not Fraud', 'Fraud'])
+    save_plot_as_png(plot_function, 'boxplot_browser_age')
+
+# Box plot between country and purchase_value
+def boxplot_country_purchase_value(data):
+    # Identify the top 15 countries
+    top_countries = data['country'].value_counts().head(15).index
+
+    # Create a new column 'country_grouped' to categorize countries
+    data['country_grouped'] = np.where(data['country'].isin(top_countries), data['country'], 'Others')
+
+    def plot_function():
+        # Set up the figure
+        plt.figure(figsize=(18, 10))
+        # Create boxplot
+        sns.boxplot(data=data, x='country_grouped', y='purchase_value', hue='class', palette='gray')
+        # Set the title
+        plt.title('Boxplot of Country and Purchase Value')
+        # Set x-axis label
+        plt.xlabel('Country')
+        # rotate the x axis labels
+        plt.xticks(rotation=10)
+        # Set y-axis label
+        plt.ylabel('Purchase Value')
+        # Show the legend with class meaning 0: Not Fraud, 1: Fraud
+        plt.legend(title='Class', loc='upper right', labels=['Not Fraud', 'Fraud'])
+
+    # Save the plot
+    save_plot_as_png(plot_function, 'boxplot_country_purchase_value')
+
+
 
 # initialize the python script
 if __name__ == '__main__':
@@ -301,4 +385,10 @@ if __name__ == '__main__':
     # Heatmap with cramer' V of categorical browser and class
     #cramer_v_categorical_browser(data)
     # Heatmap with cramer' V of categorical device_id and class
-    cramer_v_categorical_device_id(data)
+    #cramer_v_categorical_device_id(data)
+    # Horizontal stacked bar chart and cramer's V of categorical country and class
+    #cramer_v_categorical_country(data)
+    # Box plot between browser and age
+    #boxplot_browser_age(data)
+    # Box plot between country and purchase_value
+    boxplot_country_purchase_value(data)

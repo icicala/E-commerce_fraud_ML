@@ -1,9 +1,8 @@
 import pandas as pd
 import os
-import numpy as np
-import scipy.stats as stats
-from scipy.stats.contingency import association
-
+import statsmodels.api as sm
+from statsmodels.formula.api import ols
+from statsmodels.stats.anova import anova_lm
 def save_to_file(filename, text):
     with open(filename, 'a') as file:
         file.write(text)
@@ -186,9 +185,55 @@ def cross_tabulation_categorical_features_and_label(data):
     # Save the output to a file
     save_to_file('report.txt', text_output)
 
+#anova test categorical-numerical variables
+def anova_categorical_numerical(data):
+    text_output = '##############################################\n'
+    text_output += '##### Anova test categorical-numerical variables ####\n'
+    text_output += '##############################################\n'
+
+    # Categorical features
+    categorical_features = ['source', 'browser', 'country']
+
+    # Numerical features
+    numerical_features = ['purchase_value', 'age', 'user_id']
+
+    # Loop through the categorical features
+    for categorical_feature in categorical_features:
+        # Loop through the numerical features
+        for numerical_feature in numerical_features:
+            # Perform ANOVA test
+            formula = f'{numerical_feature} ~ C({categorical_feature})'
+            anova = ols(formula, data=data).fit()
+            anova_table = anova_lm(anova, typ=2)
+            # save the categorical feature and numerical feature and anova table
+            text_output += 'Categorical feature: ' + categorical_feature + '\n'
+            text_output += 'Numerical feature: ' + numerical_feature + '\n'
+            text_output += str(anova_table) + '\n'
+
+    # Save the output to a file
+    save_to_file('report.txt', text_output)
 
 
+# descriptive statistics between country and purchase_value
+def descriptive_statistics_country_purchase_value(data):
+    text_output = '##############################################\n'
+    text_output += '##### Descriptive statistics between country and purchase_value ####\n'
+    text_output += '##############################################\n'
+    pd.set_option('display.max_columns', None)
+    pd.set_option('display.float_format', lambda x: '%.0f' % x)
+    # display all the raws
+    pd.set_option('display.max_rows', None)
+    # filter data for fraud class (class == 1)
+    fdata = data[data['class'] == 0]
+    column_features = fdata[['country', 'purchase_value']]
+    grouped_data = column_features.groupby(['country']).agg({'purchase_value': ['count', 'mean', 'min', 'max']})
+    # sort the data by count
+    grouped_data = grouped_data.sort_values(by=[('purchase_value', 'count')], ascending=False)
+    # Convert the DataFrameGroupBy object to a string
+    text_output += str(grouped_data) + '\n'
 
+    # Save the output to a file
+    save_to_file('report.txt', text_output)
 
 
 #initialize the python script
@@ -213,5 +258,8 @@ if __name__ == '__main__':
     # cross tabulation between categorical features and label
     #cross_tabulation_categorical_features_and_label(data)
     # Cramer's V statistic for categorical variable and class
+    # anova test categorical-numerical variables
+    #anova_categorical_numerical(data)
+    descriptive_statistics_country_purchase_value(data)
 
 
