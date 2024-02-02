@@ -14,12 +14,12 @@ def load_efraud_dataset(filename):
     return data.copy()
 
 
-# Identify the relationship between features(user_id, purchase_value, age) and label(class) column
+# Identify the relationship between features(purchase_value, age) and label(class) column
 def relationship_between_numerical_features_and_label(data):
     text_output = '##############################################\n'
     text_output += '######## Relation numerical features with label(class) ########\n'
     text_output += '##############################################\n'
-    numerical_columns = data[['user_id', 'purchase_value', 'age', 'class']]
+    numerical_columns = data[['purchase_value', 'age', 'class']]
     pd.set_option('display.max_columns', None)
     pd.set_option('display.float_format', lambda x: '%.0f' % x)
     grouped_data = numerical_columns.groupby('class').describe()
@@ -45,12 +45,15 @@ def relationship_between_datetime_features_and_label(data):
     save_to_file('report.txt', text_output)
 
 
-# Identify the relationship between categorical features: sex, source, browser, device_id, country) and label(class) column
+# Identify the relationship between categorical features: sex, source, browser, device_id, country, user_id) and label(class) column
 def relationship_between_categorical_features_and_label(data):
     text_output = '##############################################\n'
     text_output += '##### Relation categorical features with label(class) ####\n'
     text_output += '##############################################\n'
-    categorical_features = data[['sex', 'source', 'browser', 'device_id', 'country', 'class']]
+
+    categorical_features = data[['sex', 'source', 'browser', 'device_id', 'user_id' 'class']]
+    #convert 'user_id' to categorical type
+    #categorical_features['user_id'] = categorical_features['user_id'].astype('category')
     pd.set_option('display.max_columns', None)
     grouped_data = categorical_features.groupby('class').describe()
     # Convert the DataFrameGroupBy object to a string
@@ -235,6 +238,27 @@ def descriptive_statistics_country_purchase_value(data):
     # Save the output to a file
     save_to_file('report.txt', text_output)
 
+# descriptive statistics between country and age
+def descriptive_statistics_country_age(data):
+    text_output = '##############################################\n'
+    text_output += '##### Descriptive statistics between country and age ####\n'
+    text_output += '##############################################\n'
+    pd.set_option('display.max_columns', None)
+    pd.set_option('display.float_format', lambda x: '%.0f' % x)
+    # display all the raws
+    pd.set_option('display.max_rows', None)
+    # filter data for fraud class (class == 1)
+    fdata = data[data['class'] == 1]
+    column_features = fdata[['country', 'age']]
+    grouped_data = column_features.groupby(['country']).agg({'age': ['count', 'mean', 'min', 'max']})
+    # sort the data by count
+    grouped_data = grouped_data.sort_values(by=[('age', 'count')], ascending=False)
+    # Convert the DataFrameGroupBy object to a string
+    text_output += str(grouped_data) + '\n'
+
+    # Save the output to a file
+    save_to_file('report.txt', text_output)
+
 
 #initialize the python script
 if __name__ == '__main__':
@@ -245,8 +269,8 @@ if __name__ == '__main__':
     # relationship between datetime features and label
     #relationship_between_datetime_features_and_label(data)
     # relationship between categorical features and label
-    #relationship_between_categorical_features_and_label(data)
-    # relationship between categorical features and categorical features
+    relationship_between_categorical_features_and_label(data)
+    #relationship between categorical features and categorical features
     #relation_between_categorical_features_and_country(data)
     #relation_between_categorical_features_and_category(data)
     # relation between source and age
@@ -260,6 +284,7 @@ if __name__ == '__main__':
     # Cramer's V statistic for categorical variable and class
     # anova test categorical-numerical variables
     #anova_categorical_numerical(data)
-    descriptive_statistics_country_purchase_value(data)
+    #descriptive_statistics_country_purchase_value(data)
+    #descriptive_statistics_country_age(data)
 
 

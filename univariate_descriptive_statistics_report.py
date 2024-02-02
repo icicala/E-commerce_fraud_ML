@@ -122,8 +122,8 @@ def descriptive_statistics_numerical(data):
     :return: None
     """
     pd.options.display.float_format = '{:,.2f}'.format
-    # Remove from data datatime columns
-    data = data.select_dtypes(include=['int64', 'float64'])
+    # data numerical columns purchase_value, age, ip_address
+    data = data[['purchase_value', 'age', 'ip_address']]
     text_output = '##############################################\n'
     text_output += '### Descriptive statistics Numerical data ####\n'
     text_output += '##############################################\n'
@@ -159,7 +159,12 @@ def descriptive_statistics_categorical(data):
     text_output = '##############################################\n'
     text_output += '## Descriptive statistics categorical data ###\n'
     text_output += '##############################################\n'
-    text_output += str(data.describe(include='object')) + '\n'
+    # data categorical columns device_id, source, browser, sex, user_id
+    data = data[['device_id', 'source', 'browser', 'sex', 'user_id', 'class']].copy()
+    # transform user_id  as categorical data
+    data['user_id'] = data['user_id'].astype('category')
+    data['class'] = data['class'].astype('category')
+    text_output += str(data.describe()) + '\n'
     save_to_file('report.txt', text_output)
 
 
@@ -306,45 +311,45 @@ if __name__ == '__main__':
     data_ip = read_data('IpAddress_to_Country.csv', delimiter=';')
 ######## Fraud_Data.csv ###########
     # Exploring data frames
-    explore_data_frames(data_fraud)
+    #explore_data_frames(data_fraud)
     # Missing values
-    missing_values(data_fraud)
+    #missing_values(data_fraud)
     # Check null values
-    check_null_values(data_fraud)
+    #check_null_values(data_fraud)
     # Datatframe data types
-    data_types(data_fraud)
+    #data_types(data_fraud)
     # Data metadata
-    data_metadata(data_fraud)
+    #data_metadata(data_fraud)
     # Descriptive statistics numerical
-    descriptive_statistics_numerical(data_fraud)
+    #descriptive_statistics_numerical(data_fraud)
     # Check user_id sequence
-    check_user_id(data_fraud)
+    #check_user_id(data_fraud)
     # Check unique user_id
-    check_unique_user_id(data_fraud)
+    #check_unique_user_id(data_fraud)
     # Descriptive statistics categorical
     descriptive_statistics_categorical(data_fraud)
     # Check datetime format
-    check_datetime_format(data_fraud)
+    #check_datetime_format(data_fraud)
     # Descriptive statistics datetime
-    descriptive_statistics_datetime(data_fraud)
+    #descriptive_statistics_datetime(data_fraud)
 ######## IpAddress_to_Country.csv ###########
     # Check Ip Address data type
-    check_ip_address(data_ip)
+    #check_ip_address(data_ip)
     # Check missing values
-    check_missing_values(data_ip)
+    #check_missing_values(data_ip)
     # Check null values
-    check_null_values(data_ip)
+    #check_null_values(data_ip)
     # Descriptive statistics numerical
-    descriptive_statistics_numerical_ip_address(data_ip)
+    #descriptive_statistics_numerical_ip_address(data_ip)
     # Descriptive statistics categorical
-    descriptive_statistics_categorical_ip_address(data_ip)
+    #descriptive_statistics_categorical_ip_address(data_ip)
 ############# Data Transform ################
     # load transformed data
-    data_transformed = read_data('EFraud_Data_Country.csv', parse_dates=['signup_time', 'purchase_time'])
+    #data_transformed = read_data('EFraud_Data_Country.csv', parse_dates=['signup_time', 'purchase_time'])
     # Descriptive statistics country
-    descriptive_statistics_country(data_transformed)
+    #descriptive_statistics_country(data_transformed)
     # Find the total amount from country column 'Not Found' values
-    find_not_found_country(data_transformed)
+    #find_not_found_country(data_transformed)
 
 
 

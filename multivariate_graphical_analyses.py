@@ -361,7 +361,33 @@ def boxplot_country_purchase_value(data):
     # Save the plot
     save_plot_as_png(plot_function, 'boxplot_country_purchase_value')
 
+# Box plot between country and age
+def boxplot_country_age(data):
+    # Identify the top 15 countries
+    top_countries = data['country'].value_counts().head(15).index
 
+    # Create a new column 'country_grouped' to categorize countries
+    data['country_grouped'] = np.where(data['country'].isin(top_countries), data['country'], 'Others')
+
+    def plot_function():
+        # Set up the figure
+        plt.figure(figsize=(18, 10))
+        # Create boxplot
+        sns.boxplot(data=data, x='country_grouped', y='age', hue='class', palette='gray')
+        # Set the title
+        plt.title('Boxplot of Country and Age')
+        # Set x-axis label
+        plt.xlabel('Country')
+        # rotate the x axis labels
+        plt.xticks(rotation=10)
+        # Set y-axis label
+        plt.ylabel('Age')
+        # Show the legend with class meaning 0: Not Fraud, 1: Fraud
+        plt.legend(title='Class', loc='upper right', labels=['Not Fraud', 'Fraud'])
+
+    # Save the plot
+    save_plot_as_png(plot_function, 'boxplot_country_age')
+#
 
 # initialize the python script
 if __name__ == '__main__':
@@ -391,4 +417,6 @@ if __name__ == '__main__':
     # Box plot between browser and age
     #boxplot_browser_age(data)
     # Box plot between country and purchase_value
-    boxplot_country_purchase_value(data)
+    #boxplot_country_purchase_value(data)
+    # Box plot between country and age
+    #boxplot_country_age(data)
