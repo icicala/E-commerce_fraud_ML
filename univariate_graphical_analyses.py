@@ -3,6 +3,7 @@ import os
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+import numpy as np
 
 
 
@@ -13,21 +14,19 @@ def load_efraud_dataset(filename):
     return data.copy()
 
 def save_plot_as_png(plot_function, plot_name):
-    plt.figure(figsize=(15, 12))
+    plt.figure(figsize=(15, 7))
     plot_function()
-    os.makedirs(os.path.join(os.path.dirname(__file__), 'plot'), exist_ok=True)
-    save_file = os.path.join(os.path.dirname(__file__), 'plot', f'{plot_name}_histogram.png')
+    os.makedirs(os.path.join(os.path.dirname(__file__), 'plots'), exist_ok=True)
+    save_file = os.path.join(os.path.dirname(__file__), 'plots', f'{plot_name}_histogram.png')
     plt.savefig(save_file)
     plt.close()
-#histogram for discrete data: user_id, purchase_value, age
+#histogram for discrete data: purchase_value, age relative frequency
 def histogram_boxplot_discrete(data):
-    # Extract numerical columns for histogram
-    numerical_columns = data.select_dtypes(include=['int64', 'float64']).columns
-    # Exclude class and ip_address columns
-    numerical_columns = numerical_columns.drop(['class', 'ip_address'])
+    # Extract discrete columns
+    discrete_columns = data[['purchase_value', 'age']].columns
 
-    # Plot histogram and box plot for each numerical column
-    for col in numerical_columns:
+    # Plot histogram and box plot for each discrete column
+    for col in discrete_columns:
         def plot_function():
             # Create a figure composed of two matplotlib.Axes objects (ax_box and ax_hist)
             f, (ax_box, ax_hist) = plt.subplots(2, sharex=True, gridspec_kw={"height_ratios": (.15, .85)})
@@ -36,8 +35,8 @@ def histogram_boxplot_discrete(data):
             sns.boxplot(data=data, x=col, color='grey', ax=ax_box)
             ax_box.set(xlabel='')
 
-            # Histogram
-            sns.histplot(data=data, x=col, bins=30, color='black', kde=True, ax=ax_hist)
+            # Histogram relative frequency
+            sns.histplot(data=data, x=col, bins=30, color='black', kde=True, ax=ax_hist, stat='density')
             # Draw the mean line
             mean_value = data[col].mean()
             ax_hist.axvline(mean_value, color='black', linestyle='dashed', linewidth=2)
@@ -47,9 +46,11 @@ def histogram_boxplot_discrete(data):
             ax_hist.text(mean_value, ax_hist.get_ylim()[1], f'Mean: {mean_value:.2f}', color='black', verticalalignment='top')
 
             # Customize labels and titles
-            plt.suptitle(f'Box plot and Histogram of {col} column', y=1.00, fontsize=12)
+            plt.suptitle(f'Box plot and Histogram of {col} column', fontsize=12)
             plt.xlabel(col)
-            plt.ylabel('Count')
+            plt.ylabel('Relative Frequency')
+
+
 
             plt.tight_layout()
 
@@ -58,15 +59,16 @@ def histogram_boxplot_discrete(data):
 
 
 
+
 # Bar chart for class
 def bar_chart_class(data):
     def plot_function():
-        sns.countplot(data=data, x='class', color='grey')
+        # Bar plot with relative frequency on the y-axis
+        sns.barplot(x=data['class'].value_counts().index, y=data['class'].value_counts(normalize=True), color='grey')
         # Customize labels and titles
-        plt.title('Distribution of Fraudulent and Non-Fraudulent Transactions')
+        plt.title('Distribution of Class Variable')
         plt.xlabel('Class')
-        plt.ylabel('Count')
-        plt.xticks([0, 1], ['Not Fraud', 'Fraud'])
+        plt.ylabel('Relative Frequency')
 
     # Save the plot as PNG using the save_plot_as_png function
     save_plot_as_png(plot_function, 'class')
@@ -85,9 +87,8 @@ def histogram_boxplot_datetime(data):
             # Box plot
             sns.boxplot(data=data, x=col, color='grey', ax=ax_box)
             ax_box.set(xlabel='')
-
-            # Histogram
-            sns.histplot(data=data, x=col, bins=30, color='black', kde=True, ax=ax_hist)
+            # Histogram with relative frequency
+            sns.histplot(data=data, x=col, bins=30, color='black', kde=True, ax=ax_hist, stat='density')
             # Draw the mean line
             mean_value = data[col].mean()
             ax_hist.axvline(mean_value, color='black', linestyle='dashed', linewidth=2)
@@ -99,55 +100,77 @@ def histogram_boxplot_datetime(data):
             # Customize labels and titles
             plt.suptitle(f'Box plot and Histogram of {col} column', y=1.00, fontsize=12)
             plt.xlabel(col)
-            plt.ylabel('Count')
+            plt.ylabel('Relative Frequency')
 
             plt.tight_layout()
+
 
         # Save the plot as PNG using the save_plot_as_png function
         save_plot_as_png(plot_function, col)
 
 # Bar chart for categorical data: sex, source, browser
 def bar_chart_categorical(data):
-    # Extract categorical columns
-    categorical_columns = data.select_dtypes(include=['object']).columns
-    categorical_columns = categorical_columns.drop(['device_id', 'country'])
+    data = data[['source', 'browser', 'sex']].copy()
+    categorical_columns = data.columns
+
 
     # Plot bar chart for each categorical column
     for col in categorical_columns:
         def plot_function():
-            sns.countplot(data=data, x=col, color='grey')
+            # Bar plot with relative frequency on the y-axis
+            sns.barplot(x=data[col].value_counts().index, y=data[col].value_counts(normalize=True), color='grey')
             # Customize labels and titles
-            plt.title(f'Distribution of {col} column')
+            plt.title(f'Distribution of {col} variable')
             plt.xlabel(col)
-            plt.ylabel('Count')
-
-        # Save the plot as PNG using the save_plot_as_png function
+            plt.ylabel('Relative Frequency')
         save_plot_as_png(plot_function, col)
 
 # Horizontal bar chart for country
 def bar_chart_country(data):
-    top_countries = data['country'].value_counts().nlargest(30)
-    other_countries = data['country'].value_counts().index[30:]
+    # Calculate total number of transactions
+    total_transactions = len(data)
 
-    # Create a DataFrame with top 30 countries and their counts
-    top_countries_df = pd.DataFrame({'Country': top_countries.index, 'Count': top_countries.values})
+    # Get counts for each country
+    country_counts = data['country'].value_counts()
 
-    # Create a DataFrame for the 'Others' category with the sum of transactions
-    others_df = pd.DataFrame({'Country': ['Others'], 'Count': [data[data['country'].isin(other_countries)]['country'].count()]})
+    # Calculate relative frequency for each country
+    relative_frequencies = country_counts / total_transactions
+
+    # Sort by relative frequency
+    sorted_countries = relative_frequencies.sort_values(ascending=False)
+
+    # Select the top 30 countries
+    top_countries = sorted_countries.head(30)
+
+    # Calculate the sum of relative frequencies for other countries
+    other_countries_frequency = sorted_countries[30:].sum()
+
+    # Create a DataFrame with top 30 countries and their relative frequencies
+    top_countries_df = pd.DataFrame({'Country': top_countries.index, 'Relative Frequency': top_countries.values})
+
+    # Create a DataFrame for the 'Others' category
+    others_df = pd.DataFrame({'Country': ['Others'], 'Relative Frequency': [other_countries_frequency]})
 
     # Concatenate top 30 and 'Others' DataFrames
     combined_dataframe = pd.concat([top_countries_df, others_df])
 
     def plot_functions():
-        sns.barplot(x='Count', y='Country', data=combined_dataframe, color='grey')
+        # Bar plot with relative frequency on the y-axis
+        sns.barplot(x=combined_dataframe['Relative Frequency'], y=combined_dataframe['Country'], color='grey')
         # Customize labels and titles
-        plt.title('Top 30 Countries with the Most Transactions')
-        plt.xlabel('Count')
+        plt.title('Distribution of Transactions per Country (Relative Frequency)')
+        plt.xlabel('Relative Frequency')
         plt.ylabel('Country')
+
     save_plot_as_png(plot_functions, 'country')
 
+
+
+
+
+
 # Device_ID map to numeric plot Histogram
-def device_id_histoboxplot(data):
+def histogram_device_id(data):
     # Create a mapping from device_id to unique numeric identifiers
     device_id_mapping = {device_id: idx for idx, device_id in enumerate(data['device_id'].unique())}
 
@@ -155,26 +178,30 @@ def device_id_histoboxplot(data):
     data['device_id_numeric'] = data['device_id'].map(device_id_mapping)
 
     def plot_function():
-        # Create a figure composed of two matplotlib.Axes objects (ax_box and ax_hist)
-        f, (ax_box, ax_hist) = plt.subplots(2, sharex=True, gridspec_kw={"height_ratios": (.15, .85)})
-
-        # Box plot
-        sns.boxplot(x=data['device_id_numeric'], color='grey', ax=ax_box)
-        ax_box.set(xlabel='')
-
-        # Histogram
-        sns.histplot(data['device_id_numeric'], bins=30, color='black', kde=True, ax=ax_hist)
+        # Histogram with relative frequency on the y-axis
+        sns.histplot(data['device_id_numeric'], bins=30, color='black', kde=True, stat='density')
 
         # Draw the red curve line
-        ax_hist.lines[0].set_color('red')
-
+        plt.gca().lines[0].set_color('red')
         plt.xlabel('Numeric Device ID')
-        plt.ylabel('Frequency')
-        plt.suptitle('Distribution of Transactions per Device (Numeric IDs)', y=1.0)  # Remove the default super title
-
-        plt.tight_layout()
+        plt.ylabel('Relative Frequency')
+        plt.title('Distribution of Transactions per Device ID')
 
     save_plot_as_png(plot_function, 'device_id_numeric')
+
+# Histogram for user_id
+def histogram_user_id(data):
+    def plot_function():
+        # Plot histogram with relative frequency on the y-axis
+        sns.histplot(data['user_id'], bins=30, color='black', kde=True, stat='density')
+        # Draw the red curve line
+        plt.gca().lines[0].set_color('red')
+        # Customize labels and titles
+        plt.title('Distribution of Transactions per User ID')
+        plt.xlabel('User ID')
+        plt.ylabel('Relative Frequency')
+
+    save_plot_as_png(plot_function, 'user_id')
 # python init
 if __name__ == '__main__':
     dataset = load_efraud_dataset('EFraud_Data_Country.csv')
@@ -188,5 +215,8 @@ if __name__ == '__main__':
     #bar_chart_categorical(dataset)
     # Bar chart for country
     #bar_chart_country(dataset)
-    # Histogram for device_id
-    #device_id_histoboxplot(dataset)
+    # histogram for user_id
+    #histogram_user_id(dataset)
+    # Device_ID map to numeric plot Histogram
+    #histogram_device_id(dataset)
+
