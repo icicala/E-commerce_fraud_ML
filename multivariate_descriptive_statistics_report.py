@@ -265,11 +265,11 @@ if __name__ == '__main__':
     # load dataset
     data = load_efraud_dataset('Efraud_Data_Country.csv')
     # relationship between features and label
-    #relationship_between_numerical_features_and_label()
+    relationship_between_numerical_features_and_label(data)
     # relationship between datetime features and label
     #relationship_between_datetime_features_and_label(data)
     # relationship between categorical features and label
-    relationship_between_categorical_features_and_label(data)
+    #relationship_between_categorical_features_and_label(data) ---- last opened
     #relationship between categorical features and categorical features
     #relation_between_categorical_features_and_country(data)
     #relation_between_categorical_features_and_category(data)

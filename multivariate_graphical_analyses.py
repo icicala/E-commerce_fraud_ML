@@ -7,7 +7,7 @@ from scipy.stats import pointbiserialr
 from scipy.stats.contingency import association
 import scipy.stats as stats
 
-
+from ydata_profiling import ProfileReport
 from pandas.plotting import autocorrelation_plot
 from scipy import fft
 from scipy.stats import spearmanr
@@ -30,34 +30,122 @@ def load_efraud_dataset(filename):
     data = pd.read_csv(filename, parse_dates=['signup_time', 'purchase_time'])
     return data.copy()
 
+# Pandas data profiling report
+def data_profiling_report(data):
+    # Create a pandas profiling report
+    profile = ProfileReport(data, title='Pandas Profiling Report', explorative=True)
+    # Save the report as HTML file
+    profile.to_file(os.path.join('reports', 'pandas_profiling_report.html'))
 
-# Heatmap of correlation between numerical features and label(class) column
-def numerical_heatmap(data):
-    def plot_function():
-        numerical_columns = data[['user_id', 'purchase_value', 'age', 'class']]
-        pd.set_option('display.max_columns', None)
-        pd.set_option('display.float_format', lambda x: '%.2f' % x)
-        corr = numerical_columns.corr()
-        # Plotting Heatmap
-        plt.figure(figsize=(10, 6))
-        sns.heatmap(corr[['class']], annot=True, fmt='.2f', cmap='coolwarm')
-        plt.title('Correlation Heatmap between Numerical Variables and Class')
+# Count plot of class and discrete numerical features using relative frequency
+def relationship_between_numerical_features_and_label(data):
+    def plot_age():
+        # custom palette
+        custom_palette = ['grey', 'coral']
+        # count plot of age and class
+        ax = sns.countplot(data=data, x='age', hue='class', stat='proportion', palette=custom_palette)
+        # Set the title
+        plt.title('Count Plot of Age and Class')
+        # Set x-axis label
+        plt.xlabel('Age')
+        # Set y-axis label
+        plt.ylabel('Relative Frequency')
+        # Show the legend with class meaning 0: Not Fraud, 1: Fraud
+        plt.legend(title='Class', loc='upper right', labels=['Not Fraud', 'Fraud'])
+        # fix the problem cluttering the x-axis by showing every every second age
+        for ind, label in enumerate(ax.get_xticklabels()):
+            # descriptive statiscs of the age
+            age_descriptive_stats = data['age'].describe()
+            # remove all data from x-axis
+            ax.xticks = []
+            # show only the minimum, maximum and mean age, Q1 and Q3 on the x-axis
+            if label.get_text() in [str(int(age_descriptive_stats['min'])), str(int(age_descriptive_stats['25%'])), str(int(age_descriptive_stats['75%'])), str(int(age_descriptive_stats['max'])), str(int(age_descriptive_stats['mean']))]:
+                label.set_visible(True)
+            else:
+                label.set_visible(False)
+        # point-biserial correlation between age and class
+        corr_coeff, p_value = pointbiserialr(data['age'], data['class'])
+        # put the correlation coefficient and p-value on the plot
+        plt.text(0.5, 0.5, 'Correlation Coefficient: %.2f\nP-value: %.2f' % (corr_coeff, p_value),
+                    horizontalalignment='left', verticalalignment='center', transform=plt.gca().transAxes)
+        # save the plot as png
+    save_plot_as_png(plot_age, 'countplot_age')
 
-    save_plot_as_png(plot_function, 'numerical_heatmap')
+    def plot_purchase_value():
+        # custom palette
+        custom_palette = ['grey', 'coral']
+        # count plot of purchase_value and class
+        ax = sns.countplot(data=data, x='purchase_value', hue='class', stat='proportion', palette=custom_palette)
+        # Set the title
+        plt.title('Count Plot of Purchase Value and Class')
+        # Set x-axis label
+        plt.xlabel('Purchase Value')
+        # Set y-axis label
+        plt.ylabel('Relative Frequency')
+        # Show the legend with class meaning 0: Not Fraud, 1: Fraud
+        plt.legend(title='Class', loc='upper right', labels=['Not Fraud', 'Fraud'])
+        # fix the problem cluttering the x-axis by showing every every second purchase_value
+        for ind, label in enumerate(ax.get_xticklabels()):
+            # descriptive statiscs of the purchase_value
+            purchase_value_descriptive_stats = data['purchase_value'].describe()
+            # remove all data from x-axis
+            ax.xticks = []
+            # show only the minimum, maximum and mean purchase_value, Q1 and Q3 on the x-axis
+            if label.get_text() in [str(int(purchase_value_descriptive_stats['min'])), str(int(purchase_value_descriptive_stats['25%'])), str(int(purchase_value_descriptive_stats['75%'])), str(int(purchase_value_descriptive_stats['max'])), str(int(purchase_value_descriptive_stats['mean']))]:
+                label.set_visible(True)
+            else:
+                label.set_visible(False)
+        # point-biserial correlation between purchase_value and class
+        corr_coeff, p_value = pointbiserialr(data['purchase_value'], data['class'])
+        # put the correlation coefficient and p-value on the plot
+        plt.text(0.5, 0.5, 'Correlation Coefficient: %.2f\nP-value: %.2f' % (corr_coeff, p_value),
+                    horizontalalignment='left', verticalalignment='center', transform=plt.gca().transAxes)
+        # save the plot as png
+    save_plot_as_png(plot_purchase_value, 'countplot_purchase_value')
 
 
-# Heatmap of correlation between datetime features(signup_time, purchase_time) and label(class) column
-def datetime_heatmap(data):
-    def plot_function():
-        datetime_columns = data[['signup_time', 'purchase_time', 'class']]
-        pd.set_option('display.max_columns', None)
-        corr = datetime_columns.corr()
-        # Plotting Heatmap
-        plt.figure(figsize=(10, 6))
-        sns.heatmap(corr[['class']], annot=True, fmt='.2f', cmap='coolwarm')
-        plt.title('Correlation Heatmap between Datetime Variables and Class')
 
-    save_plot_as_png(plot_function, 'datetime_heatmap')
+
+# kernel density plot of correlation between datetime features(signup_time, purchase_time) and label(class) column
+def relationship_between_datetime_features_and_label(data):
+    def plot_signup_time():
+        # Convert inf values to NaN before operating
+        data['signup_time'] = data['signup_time'].replace([np.inf, -np.inf], np.nan)
+        # Set up the figure
+        plt.figure(figsize=(12, 8))
+        # custom palette
+        custom_palette = ['black', 'coral']
+        # Create ridgeline plot
+        sns.kdeplot(data=data, x='signup_time', hue='class', fill=True, common_norm=True, alpha=0.3, palette=custom_palette)
+        # Set the title
+        plt.title('Grouped Kernel Density Plot of Sign Up Time')
+        # Set x-axis label
+        plt.xlabel('Sign Up Time')
+        # Set y-axis label
+        plt.ylabel('Frequency')
+        # change the 0 not fraud and 1 fraud
+        plt.legend(title='Class', loc='upper right', labels=['Fraud', 'Not Fraud'])
+    save_plot_as_png(plot_signup_time, 'kde_signup_time')
+
+    def plot_purchase_time():
+        # Convert inf values to NaN before operating
+        data['purchase_time'] = data['purchase_time'].replace([np.inf, -np.inf], np.nan)
+        plt.figure(figsize=(12, 8))
+        # custom palette
+        custom_palette = ['black', 'coral']
+        # Create ridgeline plot
+        sns.kdeplot(data=data, x='purchase_time', hue='class', fill=True, common_norm=True, alpha=0.3, palette=custom_palette)
+        # Set the title
+        plt.title('Grouped Kernel Density Plot of Purchase Time')
+        # Set x-axis label
+        plt.xlabel('Purchase Time')
+        # Set y-axis label
+        plt.ylabel('Frequency')
+        # change the 0 not fraud and 1 fraud
+        plt.legend(title='Class', loc='upper right', labels=['Fraud', 'Not Fraud'])
+    save_plot_as_png(plot_purchase_time, 'kde_purchase_time')
+
+
 
 
 # KDE sign up time day of the week and class
@@ -392,9 +480,9 @@ def boxplot_country_age(data):
 # initialize the python script
 if __name__ == '__main__':
     data = load_efraud_dataset('EFraud_Data_Country.csv')
-    # relationship_between_numerical_features_and_label(data)
-    # numerical_heatmap(data)
-    # relationship_between_datetime_features_and_label(data)
+    #data_profiling_report(data)
+    #relationship_between_numerical_features_and_label(data)
+    relationship_between_datetime_features_and_label(data)
     # datetime_heatmap(data)
     # kde plot sign up time and class
     # plot_sign_up_dateweek_features(data)
