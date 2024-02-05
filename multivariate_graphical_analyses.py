@@ -157,8 +157,10 @@ def plot_sign_up_dateweek_features(data):
         datetime_columns['signup_day_of_week'] = datetime_columns['signup_time'].dt.dayofweek
         # Set up the figure
         plt.figure(figsize=(12, 8))
+        #custom palette
+        custom_palette = ['black', 'coral']
         # Create KDE plot for the day of the week component
-        sns.kdeplot(data=datetime_columns, x='signup_day_of_week', hue='class', fill=True, common_norm=False, alpha=0.3)
+        sns.kdeplot(data=datetime_columns, x='signup_day_of_week', hue='class', fill=True, common_norm=True, alpha=0.3, palette=custom_palette)
         # legent to show class meaning 0: Not Fraud, 1: Fraud
         plt.legend(title='Class', loc='upper right', labels=['Fraud', 'Not Fraud'])
         # legend to show xaxis meaning 0: Monday, 1: Tuesday, 2: Wednesday, 3: Thursday, 4: Friday, 5: Saturday, 6: Sunday
@@ -189,8 +191,10 @@ def plot_sign_up_datehours_features(data):
         datetime_columns['signup_hour'] = datetime_columns['signup_time'].dt.hour
         # Set up the figure
         plt.figure(figsize=(12, 8))
+        #custom palette
+        custom_palette = ['black', 'coral']
         # Create KDE plot for the time component (hour)
-        sns.kdeplot(data=datetime_columns, x='signup_hour', hue='class', fill=True, common_norm=False, alpha=0.3)
+        sns.kdeplot(data=datetime_columns, x='signup_hour', hue='class', fill=True, common_norm=True, alpha=0.3, palette=custom_palette)
         # Legend to show class meaning 0: Not Fraud, 1: Fraud
         plt.legend(title='Class', loc='upper right', labels=['Fraud', 'Not Fraud'])
         # Set the x axis from 0 to 23
@@ -221,9 +225,11 @@ def plot_purchase_dateweek_features(data):
         datetime_columns['purchase_day_of_week'] = datetime_columns['purchase_time'].dt.dayofweek
         # Set up the figure
         plt.figure(figsize=(12, 8))
+        # custom palette
+        custom_palette = ['black', 'coral']
         # Create KDE plot for the day of the week component
-        sns.kdeplot(data=datetime_columns, x='purchase_day_of_week', hue='class', fill=True, common_norm=False,
-                    alpha=0.3)
+        sns.kdeplot(data=datetime_columns, x='purchase_day_of_week', hue='class', fill=True, common_norm=True,
+                    alpha=0.3, palette=custom_palette)
         # legent to show class meaning 0: Not Fraud, 1: Fraud
         plt.legend(title='Class', loc='upper right', labels=['Fraud', 'Not Fraud'])
         # legend to show xaxis meaning 0: Monday, 1: Tuesday, 2: Wednesday, 3: Thursday, 4: Friday, 5: Saturday, 6: Sunday
@@ -254,8 +260,10 @@ def plot_purchase_datehours_features(data):
         datetime_columns['purchase_hour'] = datetime_columns['purchase_time'].dt.hour
         # Set up the figure
         plt.figure(figsize=(12, 8))
+        # custom palette
+        custom_palette = ['black', 'coral']
         # Create KDE plot for the time component (hour)
-        sns.kdeplot(data=datetime_columns, x='purchase_hour', hue='class', fill=True, common_norm=False, alpha=0.3)
+        sns.kdeplot(data=datetime_columns, x='purchase_hour', hue='class', fill=True, common_norm=True, alpha=0.3, palette=custom_palette)
         # Legend to show class meaning 0: Not Fraud, 1: Fraud
         plt.legend(title='Class', loc='upper right', labels=['Fraud', 'Not Fraud'])
         # Set the x axis from 0 to 23
@@ -277,65 +285,81 @@ def plot_purchase_datehours_features(data):
     save_plot_as_png(plot_function, 'purchase_kdeplot_hour_of_day')
 
 
-# Heatmap with cramer's V of categorical source and class
+# Heatmap with relative frequncy and total, cramer's V of categorical source and class
 def cramer_v_categorical_source(data):
-    # Function to plot heatmap with crosstab of categorical features and class
     def plot_function():
-        # Create a contingency table for the "source" and "class" columns
-        contingency_table = pd.crosstab(data['source'], data['class'])
-        # Calculate Cramer's V
-        cramer_v_value = association(contingency_table.values, method='cramer')
-        # Plotting Heatmap
-        plt.figure(figsize=(12, 8))
-        sns.heatmap(contingency_table, annot=True, fmt='d', cmap='coolwarm')
-        # set custom x-axis labels
-        plt.xticks([0.5, 1.5], ['Not Fraud', 'Fraud'], rotation=0)
-        # Set the title with Cramer's V value
-        plt.title(f'Heatmap of Source and Class\nCramer\'s V: {cramer_v_value:.4f}')
+        # create contingency table for source and class columns with relative frequency and total
+        contingency_table = pd.crosstab(data['source'], data['class'], normalize=True, margins=True)
+        # custom cmap
+        custom_palette = sns.diverging_palette(220, 20, as_cmap=True)
+        # Plot the heatmap
+        sns.heatmap(contingency_table, annot=True, fmt=".2f", cmap=custom_palette)
         # Set x-axis label
         plt.xlabel('Class')
         # Set y-axis label
         plt.ylabel('Source')
+        # Set custom x-axis labels
+        plt.xticks([0.5, 1.5, 2.5], ['Not Fraud', 'Fraud', 'All'], rotation=0)
+        # Calculate Cramer's V  value
+        cross_tab = pd.crosstab(data['source'], data['class'])
+        cramer_v_value = association(cross_tab.values, method='cramer')
+        # set the title with Cramer's V value
+        plt.title(f'Heatmap of Source and Class\nCramer\'s V: {cramer_v_value:.4f}')
+
+
+
+    # Save the plot as PNG
     save_plot_as_png(plot_function, 'heatmap_categorical_source')
 
-
-# Heatmap with cramer's V of categorical sex and class column
+# Heatmap with relative frequncy and total, cramer's V of categorical sex and class column
 def cramer_v_categorical_sex(data):
     def plot_function():
-        # Create contingency table for sex and class columns
-        contingency_table = pd.crosstab(data['sex'], data['class'])
-        # Calculate Cramer's V
-        cramer_v_value = association(contingency_table.values, method='cramer')
-        # Plotting Heatmap
-        plt.figure(figsize=(12, 8))
-        sns.heatmap(contingency_table, annot=True, fmt='d', cmap='coolwarm')
-        # set custom x-axis labels
-        plt.xticks([0.5, 1.5], ['Not Fraud', 'Fraud'], rotation=0)
-        # Set the title with Cramer's V value
-        plt.title(f'Heatmap of Sex and Class\nCramer\'s V: {cramer_v_value:.4f}')
+        # create contingency table for sex and class columns with relative frequency and total
+        contingency_table = pd.crosstab(data['sex'], data['class'], normalize=True, margins=True)
+        # custom cmap
+        custom_palette = sns.diverging_palette(220, 20, as_cmap=True)
+        # Plot the heatmap
+        sns.heatmap(contingency_table, annot=True, fmt=".2f", cmap=custom_palette)
         # Set x-axis label
         plt.xlabel('Class')
         # Set y-axis label
         plt.ylabel('Sex')
+        # Set custom x-axis labels
+        plt.xticks([0.5, 1.5, 2.5], ['Not Fraud', 'Fraud', 'All'], rotation=0)
+        # Calculate Cramer's V  value
+        cross_tab = pd.crosstab(data['sex'], data['class'])
+        cramer_v_value = association(cross_tab.values, method='cramer')
+        # set the title with Cramer's V value
+        plt.title(f'Heatmap of Sex and Class\nCramer\'s V: {cramer_v_value:.4f}')
+
+    # Save the plot as PNG
     save_plot_as_png(plot_function, 'heatmap_categorical_sex')
-# Heatmap with cramer's V of categorical browser and class column
+
+
+
+
+# Heatmap with relative frequncy and total, cramer's V of categorical browser and class column
 def cramer_v_categorical_browser(data):
     def plot_function():
-        # Create contingency table for browser and class columns
-        contingency_table = pd.crosstab(data['browser'], data['class'])
-        # Calculate Cramer's V
-        cramer_v_value = association(contingency_table.values, method='cramer')
-        # Plotting Heatmap
-        plt.figure(figsize=(12, 8))
-        sns.heatmap(contingency_table, annot=True, fmt='d', cmap='coolwarm')
-        # set custom x-axis labels
-        plt.xticks([0.5, 1.5], ['Not Fraud', 'Fraud'], rotation=0)
-        # Set the title with Cramer's V value
-        plt.title(f'Heatmap of Browser and Class\nCramer\'s V: {cramer_v_value:.4f}')
+        # create contingency table for browser and class columns with relative frequency and total
+        contingency_table = pd.crosstab(data['browser'], data['class'], normalize=True, margins=True)
+        # custom cmap
+        custom_palette = sns.diverging_palette(220, 20, as_cmap=True)
+        # Plot the heatmap
+        sns.heatmap(contingency_table, annot=True, fmt=".3f", cmap=custom_palette)
         # Set x-axis label
         plt.xlabel('Class')
         # Set y-axis label
         plt.ylabel('Browser')
+        # Set custom x-axis labels
+        plt.xticks([0.5, 1.5, 2.5], ['Not Fraud', 'Fraud', 'All'], rotation=0)
+        # Calculate Cramer's V  value
+        cross_tab = pd.crosstab(data['browser'], data['class'])
+        cramer_v_value = association(cross_tab.values, method='cramer')
+        # set the title with Cramer's V value
+        plt.title(f'Heatmap of Browser and Class\nCramer\'s V: {cramer_v_value:.4f}')
+
+    # Save the plot as PNG
     save_plot_as_png(plot_function, 'heatmap_categorical_browser')
 
 # Heatmap with cramer's V of categorical device_id and class column
@@ -482,22 +506,22 @@ if __name__ == '__main__':
     data = load_efraud_dataset('EFraud_Data_Country.csv')
     #data_profiling_report(data)
     #relationship_between_numerical_features_and_label(data)
-    relationship_between_datetime_features_and_label(data)
-    # datetime_heatmap(data)
+    #relationship_between_datetime_features_and_label(data)
+
     # kde plot sign up time and class
-    # plot_sign_up_dateweek_features(data)
+    #plot_sign_up_dateweek_features(data)
     # kde plot hours of the day(signup_time) and class
-    # plot_sign_up_datehours_features(data)
+    #plot_sign_up_datehours_features(data)
     # kde plot purchase date of the week and class
-    # plot_purchase_dateweek_features(data)
+    #plot_purchase_dateweek_features(data)
     # kde plot purchase time hour of the day and class
-    # plot_purchase_datehours_features(data)
+    #plot_purchase_datehours_features(data)
     # Heatmap with cramer's V of categorical source and class
     #cramer_v_categorical_source(data)
     # Heatmap with cramer' V of categorical sex and class
     #cramer_v_categorical_sex(data)
     # Heatmap with cramer' V of categorical browser and class
-    #cramer_v_categorical_browser(data)
+    cramer_v_categorical_browser(data)
     # Heatmap with cramer' V of categorical device_id and class
     #cramer_v_categorical_device_id(data)
     # Horizontal stacked bar chart and cramer's V of categorical country and class
