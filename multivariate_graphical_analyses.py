@@ -373,21 +373,23 @@ def map_device_id(data):
 def cramer_v_categorical_device_id(data):
     def plot_function():
         # Map device_id to numeric values
-        data_mapped, device_id_mapping = map_device_id(data)
+        data_mapped, device_id_mapping = map_device_id(data.copy())
         # create contingency table for device_id and class columns
         contingency_table = pd.crosstab(data_mapped['device_id'], data_mapped['class'])
         # Calculate Cramer's V
         cramer_v_value = association(contingency_table.values, method='cramer')
         # Create a histogram
         plt.figure(figsize=(12, 8))
-        sns.histplot(data_mapped, x='device_id_numeric', hue='class', multiple='stack', bins=30, kde=True,
-                     palette='coolwarm')
+        # custom palette
+        custom_palette = ['grey', 'coral']
+        # Create a histogram of device_id and class with relative frequency
+        sns.histplot(data=data_mapped, x='device_id_numeric', hue='class', stat='probability', bins=30, kde=True, multiple='stack', palette=custom_palette)
         # Set the title with Cramer's V value
         plt.title(f'Histogram of Device ID(Mapped) and Class\nCramer\'s V: {cramer_v_value:.4f}')
         # Set x-axis label
-        plt.xlabel('Mapped Device ID')
+        plt.xlabel('Mapped Device ID to numeric values')
         # Set y-axis label
-        plt.ylabel('Count')
+        plt.ylabel('Relative Frequency')
         # Show the legend
         plt.legend(title='Class', loc='upper right', labels=['Fraud', 'Not Fraud'])
     # Save plot as PNG using the save_plot_as_png function
@@ -395,39 +397,35 @@ def cramer_v_categorical_device_id(data):
 
 #  Horizontal stacked bar chart and cramer's V of categorical country and class column
 def cramer_v_categorical_country(data):
-    contingency_table = pd.crosstab(data['country'], data['class'])
-    cramer_v_value = association(contingency_table.values, method='cramer')
-
-    sorted_countries = contingency_table.sum(axis=1).sort_values(ascending=False)
-
-    top_countries = sorted_countries.head(30)
-
-    other_countries = sorted_countries.tail(len(sorted_countries) - 30).index
-    other_sum = contingency_table.loc[other_countries].sum()
-    contingency_table = contingency_table.loc[top_countries.index]
-    contingency_table.loc['Other'] = other_sum
-
-    # Rename 'class' column to avoid conflicts
-    contingency_table = contingency_table.rename(columns={0: 'Not Fraud', 1: 'Fraud'})
-    print(contingency_table)
-    # invert the order of the rows
-    contingency_table = contingency_table.iloc[::-1]
-
+    # Calculate Cramer's V
+    contingency_cramer_v = pd.crosstab(data['country'], data['class'])
+    cramer_v_value = association(contingency_cramer_v.values, method='cramer')
+    # create contingency table for country and class columns relative frequency
+    contingency_table = pd.crosstab(data['country'], data['class'], normalize=True, margins=True)
+    contingency_table = contingency_table.sort_values(by='All', ascending=False)
+    contingency_table = contingency_table.drop('All', axis=1)
+    contingency_table = contingency_table.drop('All', axis=0)
+    # take the top 30 countries
+    top_countries = contingency_table.head(30).copy()
+    # calculate the sum of relative frequencies for other countries
+    other_countries_frequency = contingency_table[30:].sum()
+    top_countries.loc['Others'] = other_countries_frequency
+    top_countries = top_countries.rename(columns={'0': 'Not Fraud', '1': 'Fraud'})
+    top_countries = top_countries.iloc[::-1]
     def plot_function():
-        # plot the contingency table as count plot
-        contingency_table.plot(kind='barh', stacked=True, figsize=(15, 8), color=['grey', 'coral'])
+        # Create a horizontal stacked bar chart
+        top_countries.plot(kind='barh', stacked=True, figsize=(15,8), color=['grey', 'coral'])
         # Set the title with Cramer's V value
         plt.title(f'Horizontal Stacked Bar Chart of Country and Class\nCramer\'s V: {cramer_v_value:.4f}')
         # Set x-axis label
-        plt.xlabel('Count')
+        plt.xlabel('Relative Frequency')
         # Set y-axis label
         plt.ylabel('Country')
-        # Show the legend
+        # Show the legend with class meaning 0: Not Fraud, 1: Fraud
         plt.legend(title='Class', loc='lower right', labels=['Not Fraud', 'Fraud'])
 
-
-    # Save plot as PNG using the save_plot_as_png function
-    save_plot_as_png(plot_function, 'horizontal_stacked_bar_chart_country')
+    # Save the plot as PNG
+    save_plot_as_png(plot_function, 'bar_chart_categorical_country')
 
 # Box plot between browser and age
 def boxplot_browser_age(data):
@@ -521,7 +519,7 @@ if __name__ == '__main__':
     # Heatmap with cramer' V of categorical sex and class
     #cramer_v_categorical_sex(data)
     # Heatmap with cramer' V of categorical browser and class
-    cramer_v_categorical_browser(data)
+    #cramer_v_categorical_browser(data)
     # Heatmap with cramer' V of categorical device_id and class
     #cramer_v_categorical_device_id(data)
     # Horizontal stacked bar chart and cramer's V of categorical country and class
