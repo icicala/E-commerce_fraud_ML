@@ -304,6 +304,20 @@ def find_not_found_country(data):
     text_output += str(data['country'].value_counts()['Not Found']) + '\n'
     save_to_file('report.txt', text_output)
 
+# Segmentation analysis between age and purchase value
+def segmentation_analysis(data):
+    """
+    Segmentation analysis between age and purchase value
+    :param data: data frame
+    :return: None
+    """
+    text_output = '##############################################\n'
+    text_output += '## Segmentation analysis #####################\n'
+    text_output += '##############################################\n'
+    # Segmentation analysis for each age group avg
+    avg_segmentation = data.groupby('age')['purchase_value'].mean()
+    text_output += str(avg_segmentation) + '\n'
+    save_to_file('report.txt', text_output)
 # python init main
 if __name__ == '__main__':
     # read fraud data
@@ -327,7 +341,7 @@ if __name__ == '__main__':
     # Check unique user_id
     #check_unique_user_id(data_fraud)
     # Descriptive statistics categorical
-    descriptive_statistics_categorical(data_fraud)
+    #descriptive_statistics_categorical(data_fraud)
     # Check datetime format
     #check_datetime_format(data_fraud)
     # Descriptive statistics datetime
@@ -350,6 +364,10 @@ if __name__ == '__main__':
     #descriptive_statistics_country(data_transformed)
     # Find the total amount from country column 'Not Found' values
     #find_not_found_country(data_transformed)
+############# Segmentation analysis ########
+    # Segmentation analysis
+    segmentation_analysis(data_fraud)
+
 
 
 

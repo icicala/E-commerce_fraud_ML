@@ -1,11 +1,12 @@
 import numpy as np
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 import os
 from scipy.stats import pointbiserialr
 from scipy.stats.contingency import association
 import scipy.stats as stats
+import dcor
 
 from ydata_profiling import ProfileReport
 from pandas.plotting import autocorrelation_plot
@@ -374,26 +375,21 @@ def cramer_v_categorical_device_id(data):
     def plot_function():
         # Map device_id to numeric values
         data_mapped, device_id_mapping = map_device_id(data.copy())
-        # create contingency table for device_id and class columns
+
         contingency_table = pd.crosstab(data_mapped['device_id'], data_mapped['class'])
         # Calculate Cramer's V
         cramer_v_value = association(contingency_table.values, method='cramer')
-        # Create a histogram
         plt.figure(figsize=(12, 8))
-        # custom palette
         custom_palette = ['grey', 'coral']
-        # Create a histogram of device_id and class with relative frequency
         sns.histplot(data=data_mapped, x='device_id_numeric', hue='class', stat='probability', bins=30, kde=True, multiple='stack', palette=custom_palette)
         # Set the title with Cramer's V value
         plt.title(f'Histogram of Device ID(Mapped) and Class\nCramer\'s V: {cramer_v_value:.4f}')
-        # Set x-axis label
         plt.xlabel('Mapped Device ID to numeric values')
-        # Set y-axis label
         plt.ylabel('Relative Frequency')
-        # Show the legend
         plt.legend(title='Class', loc='upper right', labels=['Fraud', 'Not Fraud'])
-    # Save plot as PNG using the save_plot_as_png function
     save_plot_as_png(plot_function, 'histogram_categorical_device_id')
+
+
 
 #  Horizontal stacked bar chart and cramer's V of categorical country and class column
 def cramer_v_categorical_country(data):
@@ -497,7 +493,110 @@ def boxplot_country_age(data):
 
     # Save the plot
     save_plot_as_png(plot_function, 'boxplot_country_age')
-#
+# Line plot between age and purchase_value with distance correlation segmentation analysis
+def scatter_plot_age_purchase_value(data):
+    def plot_function():
+        # Calculate the average purchase value for each age group and class
+        average_purchase_by_age_group_class = data.groupby(['age', 'class'],  observed=True)['purchase_value'].mean().unstack()
+        print(average_purchase_by_age_group_class)
+        # Set up the figure
+        plt.figure(figsize=(12, 8))
+        # custom palette
+        custom_palette = ['grey', 'coral']
+        # Create line plot
+        # Create line plot
+        sns.lineplot(data=average_purchase_by_age_group_class, marker='o', palette=custom_palette, dashes=False,
+                     markersize=10, linewidth=2)
+
+        # Set x-axis label
+        plt.xlabel('Age')
+        # Set y-axis label
+        # set x axis every 2 years
+        plt.xticks(np.arange(data['age'].min(), data['age'].max(), 2))
+        # set y axis every 5
+        plt.yticks(np.arange(0, 70, 5))
+        plt.ylabel('Average Purchase Value')
+        # Show the legend with class meaning 0: Not Fraud, 1: Fraud using dictionary
+        plt.legend(title='Class', handles=[
+            plt.Line2D([], [], color='grey', marker='o', linestyle='None', markersize=10, label='Not Fraud'),
+            plt.Line2D([], [], color='coral', marker='o', linestyle='None', markersize=10, label='Fraud')
+        ], loc='upper right')
+        fraud_data = data[data['class'] == 1]
+        distance_correlation = dcor.distance_correlation(fraud_data['age'].astype(float), fraud_data['purchase_value'].astype(float))
+        not_fraud_data = data[data['class'] == 0]
+        distance_correlation_not_fraud = dcor.distance_correlation(not_fraud_data['age'].astype(float), not_fraud_data['purchase_value'].astype(float))
+        plt.title(f'Line Plot of Age and Average Purchase Value\nDistance Correlation(Fraud): {distance_correlation:.4f}\nDistance Correlation(Not Fraud): {distance_correlation_not_fraud:.4f}')
+
+    # Save the plot
+    save_plot_as_png(plot_function, 'scatterplot_age_purchase_value')
+# count plot between user_id and device_id
+def number_user_id_per_device_id(data):
+    def plot_function():
+        fraud_data = data[data['class'] == 1]
+        fraud_user_device_count = fraud_data.groupby('device_id')['user_id'].nunique().reset_index(name='fraud_user_per_device')
+        not_fraud_data = data[data['class'] == 0]
+        not_fraud_user_device_count = not_fraud_data.groupby('device_id')['user_id'].nunique().reset_index(name='not_fraud_user_per_device')
+        user_device_count = fraud_user_device_count.merge(not_fraud_user_device_count, how='outer', on='device_id')
+
+        # Scatter plot of device_id and
+        plt.figure(figsize=(12, 8))
+        plt.scatter(user_device_count['device_id'], user_device_count['not_fraud_user_per_device'], label='Not Fraud',
+                    color='grey', alpha=0.3, marker='o', s=100)
+        plt.scatter(user_device_count['device_id'], user_device_count['fraud_user_per_device'], label='Fraud',
+                    color='coral', marker='x', s=20, alpha=0.3)
+        # Set the title
+        plt.title('Scatter Plot Number of Users per Device ID')
+        # Set x-axis label
+        plt.xlabel('Device ID')
+        # remove labels from x-axis
+        plt.xticks([])
+        # Set y-axis label
+        plt.ylabel('Number of Users')
+        # y axis 1 by 1
+        plt.yticks(np.arange(0, 20, 1))
+        # Show the legend with class meaning 0: Not Fraud, 1: Fraud
+        plt.legend(title='Class', loc='upper right', labels=['Not Fraud', 'Fraud'])
+
+    save_plot_as_png(plot_function, 'lineplot_user_id_device_id')
+# relationship between source and browser
+def source_browser_relationship(data):
+    def plot_function():
+        fraud_data = data[data['class'] == 1]
+        contingency_table = pd.crosstab(fraud_data['source'], fraud_data['browser'], margins=True, normalize=True)
+        custom_cmap = sns.diverging_palette(220, 20, as_cmap=True)
+        sns.heatmap(contingency_table, annot=True, fmt=".2f", cmap=custom_cmap)
+        plt.xlabel('Browser')
+        plt.ylabel('Source')
+        # Calculate Cramer's V  value
+        cross_tab = pd.crosstab(fraud_data['source'], fraud_data['browser'])
+        cramer_v_value = association(cross_tab.values, method='cramer')
+        # set the title with Cramer's V value
+        plt.title(f'Heatmap of Source and Browser\nCramer\'s V: {cramer_v_value:.4f}')
+
+    save_plot_as_png(plot_function, 'heatmap_source_browser')
+
+# Relationship between source and country
+def source_country_relationship(data):
+    def plot_function():
+        fraud_data = data[data['class'] == 1]
+        # fraud rate per country and source
+        fraud_per_country_source = fraud_data.groupby(['country', 'source'])['source'].count().reset_index(
+            name='frequency')
+
+        custom_palette = ['blue', 'orange', 'green']
+        plt.figure(figsize=(12, 8))
+        sns.scatterplot(data=fraud_per_country_source, x='country', y='frequency', hue='source',
+                        palette=custom_palette)
+        plt.title('Scatter Plot of Country and Source')
+        plt.xlabel('Country')
+        plt.xticks([])
+        plt.ylabel('Absolute Frequency')
+        freq_values = fraud_per_country_source['frequency'].unique()
+        freq_values.sort()
+        freq_values = [freq_values[0], freq_values[len(freq_values) // 2], freq_values[-1]]
+        plt.yticks(freq_values)
+    save_plot_as_png(plot_function, 'scatterplot_country_source')
+
 
 # initialize the python script
 if __name__ == '__main__':
@@ -530,3 +629,9 @@ if __name__ == '__main__':
     #boxplot_country_purchase_value(data)
     # Box plot between country and age
     #boxplot_country_age(data)
+    # Heatmap between age and purchase_value
+    #scatter_plot_age_purchase_value(data)
+############ Categorical-Categorical Analysis ################
+    #number_user_id_per_device_id(data)
+    #source_browser_relationship(data)
+    source_country_relationship(data)
