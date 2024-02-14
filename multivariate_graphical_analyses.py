@@ -690,6 +690,55 @@ def country_browser_relationship(data):
 
     save_plot_as_png(plot_function, 'heatmap_country_browser')
 
+# relationship between signup time and purchase time
+def signup_purchase_time_relationship(data):
+    def plot_function():
+
+        data['time_difference'] = (data['purchase_time'] - data['signup_time'])
+        data['time_difference_sec'] = data['time_difference'].dt.total_seconds()
+        plt.figure(figsize=(12, 8))
+        custom_palette = ['grey', 'coral']
+        sns.boxenplot(data=data, x='class', y='time_difference_sec', hue='class', palette=custom_palette)
+        plt.title('Time Differences for Fraud and Legitimate Transactions')
+        plt.xlabel('Class')
+        plt.xticks([0, 1], ['Not Fraud', 'Fraud'])
+        plt.ylabel('Time Difference in Seconds')
+        plt.legend().remove()
+
+    save_plot_as_png(plot_function, 'boxplot_difference_time_seconds')
+# Purchase value and Purchase time relationship per hour
+def purchase_value_purchase_time_relationship(data):
+    def plot_function():
+        data['purchase_hour'] = data['purchase_time'].dt.hour
+        plt.figure(figsize=(12, 8))
+        custom_palette = ['grey', 'coral']
+        plt.title('Purchase Value and Purchase Time per Hour')
+        plt.xlabel('Purchase Hour')
+        plt.ylabel('Purchase Value')
+        plt.xticks(np.arange(24))
+        sns.lineplot(data=data, x='purchase_hour', y='purchase_value', hue='class', palette=custom_palette,
+                     linestyle='--')
+        plt.legend(title='Class', handles=[
+            plt.Line2D([], [], color='grey', marker='o', linestyle='None', markersize=10, label='Not Fraud'),
+            plt.Line2D([], [], color='coral', marker='o', linestyle='None', markersize=10, label='Fraud')
+        ], loc='upper right')
+
+    save_plot_as_png(plot_function, 'scatterplot_purchase_value_purchase_time_hour')
+# relationship between signup time and device_id
+def signup_device_id_relationship(data):
+    def plot_function():
+        signup_counts = data.groupby(['device_id', 'class'])['signup_time'].count().reset_index()
+        custom_palette = ['grey', 'coral']
+        plt.figure(figsize=(12, 8))
+        sns.stripplot(data=signup_counts, x='class', y='signup_time', hue='class', palette= custom_palette, jitter=0.3, legend=False)
+        plt.title('Number of Sign Ups and Device ID')
+        plt.xlabel('Class')
+        plt.ylabel('Number of Sign Ups')
+        sns.despine()
+        plt.yticks(np.arange(0, 20, 1))
+        plt.xticks([0, 1], ['Not Fraud', 'Fraud'])
+
+    save_plot_as_png(plot_function, 'stripplot_device_id_class')
 # initialize the python script
 if __name__ == '__main__':
     data = load_efraud_dataset('EFraud_Data_Country.csv')
@@ -728,4 +777,8 @@ if __name__ == '__main__':
     # source_browser_relationship(data)
     # source_country_relationship(data)
     #browser_device_id_relationship(data)
-    country_browser_relationship(data)
+    #country_browser_relationship(data)
+    #signup_purchase_time_relationship(data)
+    #purchase_value_purchase_time_relationship(data)
+    signup_device_id_relationship(data)
+
