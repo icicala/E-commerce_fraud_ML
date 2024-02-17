@@ -739,6 +739,92 @@ def signup_device_id_relationship(data):
         plt.xticks([0, 1], ['Not Fraud', 'Fraud'])
 
     save_plot_as_png(plot_function, 'stripplot_device_id_class')
+# Linear Discrimant Analysis
+def lda_analysis(data):
+
+    # extract from purchase value year, month, day, hour, minute, second
+    data['purchase_year'] = data['purchase_time'].dt.year
+    data['purchase_month'] = data['purchase_time'].dt.month
+    data['purchase_day'] = data['purchase_time'].dt.day
+    data['purchase_hour'] = data['purchase_time'].dt.hour
+    data['purchase_minute'] = data['purchase_time'].dt.minute
+    data['purchase_second'] = data['purchase_time'].dt.second
+    # extract from signup value year, month, day, hour, minute, second
+    data['signup_year'] = data['signup_time'].dt.year
+    data['signup_month'] = data['signup_time'].dt.month
+    data['signup_day'] = data['signup_time'].dt.day
+    data['signup_hour'] = data['signup_time'].dt.hour
+    data['signup_minute'] = data['signup_time'].dt.minute
+    data['signup_second'] = data['signup_time'].dt.second
+
+    # count and map device_id
+    device_id_map = data['device_id'].value_counts().to_dict()
+    data['device_id_count'] = data['device_id'].map(device_id_map)
+    # count and map source
+    source_map = data['source'].value_counts().to_dict()
+    data['source_count'] = data['source'].map(source_map)
+    # count and map browser
+    browser_map = data['browser'].value_counts().to_dict()
+    data['browser_count'] = data['browser'].map(browser_map)
+    # count and map sex
+    sex_map = data['sex'].value_counts().to_dict()
+    data['sex_count'] = data['sex'].map(sex_map)
+    # count and map country
+    country_map = data['country'].value_counts().to_dict()
+    data['country_count'] = data['country'].map(country_map)
+
+    # drop unnecessary columns
+    data = data.drop(['signup_time', 'purchase_time', 'device_id', 'user_id', 'source', 'browser', 'sex', 'country', 'purchase_year', 'signup_year'], axis=1)
+    # split the data into features and target
+    data_features = data.drop('class', axis=1)
+    # show all columns
+    pd.set_option('display.max_columns', None)
+    data_label = data['class']
+    # Standardize the data
+    scaler = StandardScaler()
+    data_scale = scaler.fit_transform(data_features)
+    mean_vectors = []
+    # for each class calculate the mean vector
+    for cl in range(0, 2):
+        mean_vectors.append(np.mean(data_scale[data_label == cl], axis=0))
+
+    # calculate the within-class scatter matrix for unbalanced data
+    within_class_scatter_matrix = np.zeros((data_scale.shape[1], data_scale.shape[1]))
+    for cl, mv in zip(range(0, 2), mean_vectors):
+        class_scatter = np.cov(data_scale[data_label == cl].T)
+        within_class_scatter_matrix += class_scatter
+    # calculate the between-class scatter matrix
+    overall_mean = np.mean(data_scale, axis=0)
+    between_class_scatter_matrix = np.zeros((data_scale.shape[1], data_scale.shape[1]))
+    for i, mean_vec in enumerate(mean_vectors):
+        n = data_scale[data_label == i + 1, :].shape[0]
+        mean_vec = mean_vec.reshape(data_scale.shape[1], 1)
+        overall_mean = overall_mean.reshape(data_scale.shape[1], 1)
+        between_class_scatter_matrix += n * (mean_vec - overall_mean).dot((mean_vec - overall_mean).T)
+        # print between class scatter matrix
+    # calculate the eigenvalues and eigenvectors
+    eigen_values, eigen_vectors = np.linalg.eig(np.linalg.inv(within_class_scatter_matrix).dot(between_class_scatter_matrix))
+    # sort the eigenvalues and eigenvectors
+    eigen_pairs = [(np.abs(eigen_values[i]), eigen_vectors[:, i]) for i in range(len(eigen_values))]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # initialize the python script
 if __name__ == '__main__':
     data = load_efraud_dataset('EFraud_Data_Country.csv')
@@ -780,5 +866,6 @@ if __name__ == '__main__':
     #country_browser_relationship(data)
     #signup_purchase_time_relationship(data)
     #purchase_value_purchase_time_relationship(data)
-    signup_device_id_relationship(data)
+    #signup_device_id_relationship(data)
+    lda_analysis(data)
 
