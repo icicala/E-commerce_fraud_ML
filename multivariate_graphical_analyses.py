@@ -3,18 +3,34 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 import os
+from kfda import Kfda, kfda
+from scipy.cluster.hierarchy import linkage, dendrogram
+
+from scipy.linalg import eigh
+from scipy.spatial.distance import pdist
 from scipy.stats import pointbiserialr
 from scipy.stats.contingency import association
+from sklearn.decomposition import KernelPCA
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.feature_selection import SequentialFeatureSelector
+from sklearn.gaussian_process.kernels import RBF
+from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.model_selection import cross_val_score
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.pipeline import make_pipeline
+from sklearn.svm import SVC
 from statsmodels.graphics.mosaicplot import mosaic
 import scipy.stats as stats
 import dcor
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, FeatureAgglomeration
 from sklearn.preprocessing import StandardScaler
 
 from ydata_profiling import ProfileReport
 from pandas.plotting import autocorrelation_plot
 from scipy import fft
 from scipy.stats import spearmanr
+
+from SBS import SBS
 
 
 # Function to save plots as PNG files
@@ -772,13 +788,14 @@ def lda_analysis(data):
     # count and map country
     country_map = data['country'].value_counts().to_dict()
     data['country_count'] = data['country'].map(country_map)
+    # count and map ip_address
+    ip_address_map = data['ip_address'].value_counts().to_dict()
+    data['ip_address_count'] = data['ip_address'].map(ip_address_map)
 
     # drop unnecessary columns
-    data = data.drop(['signup_time', 'purchase_time', 'device_id', 'user_id', 'source', 'browser', 'sex', 'country', 'purchase_year', 'signup_year'], axis=1)
+    data = data.drop(['signup_time', 'purchase_time', 'device_id', 'user_id', 'source', 'browser', 'sex', 'country', 'purchase_year', 'signup_year', 'ip_address'], axis=1)
     # split the data into features and target
     data_features = data.drop('class', axis=1)
-    # show all columns
-    pd.set_option('display.max_columns', None)
     data_label = data['class']
     # Standardize the data
     scaler = StandardScaler()
@@ -806,24 +823,133 @@ def lda_analysis(data):
     eigen_values, eigen_vectors = np.linalg.eig(np.linalg.inv(within_class_scatter_matrix).dot(between_class_scatter_matrix))
     # sort the eigenvalues and eigenvectors
     eigen_pairs = [(np.abs(eigen_values[i]), eigen_vectors[:, i]) for i in range(len(eigen_values))]
+    eigen_pairs = sorted(eigen_pairs, key=lambda k: k[0], reverse=True)
+
+    # get the LDA coefficients
+    lda_coefficients = eigen_pairs[0][1].real
+    features_names = data_features.columns
+    importance = pd.Series(lda_coefficients, index=features_names)
+    sorted_importance = importance.abs().sort_values(ascending=False)
+    sorted_importance = sorted_importance[::-1]
+    def plot_function():
+        plt.figure(figsize=(15, 10))
+        sorted_importance.plot(kind='barh', color='coral')
+        # log scale
+        plt.xscale('log')
+        plt.title('LDA Coefficients for Features relationship with Class')
+        plt.ylabel('Feature')
+        plt.xlabel('Coefficient values')
+
+    save_plot_as_png(plot_function, 'lda_coefficients')
+# Kernel Discriminant Analysis
+def sbs_analysis(data):
+    # extract from purchase value year, month, day, hour, minute, second
+    data['purchase_year'] = data['purchase_time'].dt.year
+    data['purchase_month'] = data['purchase_time'].dt.month
+    data['purchase_day'] = data['purchase_time'].dt.day
+    data['purchase_hour'] = data['purchase_time'].dt.hour
+    data['purchase_minute'] = data['purchase_time'].dt.minute
+    data['purchase_second'] = data['purchase_time'].dt.second
+    # extract from signup value year, month, day, hour, minute, second
+    data['signup_year'] = data['signup_time'].dt.year
+    data['signup_month'] = data['signup_time'].dt.month
+    data['signup_day'] = data['signup_time'].dt.day
+    data['signup_hour'] = data['signup_time'].dt.hour
+    data['signup_minute'] = data['signup_time'].dt.minute
+    data['signup_second'] = data['signup_time'].dt.second
 
 
+    device_id_map = data['device_id'].value_counts().to_dict()
+    data['device_id_count'] = data['device_id'].map(device_id_map)
+    source_map = data['source'].value_counts().to_dict()
+    data['source_count'] = data['source'].map(source_map)
+    browser_map = data['browser'].value_counts().to_dict()
+    data['browser_count'] = data['browser'].map(browser_map)
+    sex_map = data['sex'].value_counts().to_dict()
+    data['sex_count'] = data['sex'].map(sex_map)
+    country_map = data['country'].value_counts().to_dict()
+    data['country_count'] = data['country'].map(country_map)
+
+    # drop unnecessary columns
+    data = data.drop(['signup_time', 'purchase_time', 'device_id', 'user_id', 'source', 'browser', 'sex', 'country', 'purchase_year', 'signup_year', 'ip_address'], axis=1)
+
+    # select the same amount of raw of non fraud as fraud
+    fraud_data = data[data['class'] == 1]
+    not_fraud_data = data[data['class'] == 0]
+    not_fraud_data = not_fraud_data.sample(n=fraud_data.shape[0], random_state=42)
+    data_c = pd.concat([fraud_data, not_fraud_data])
+
+    X = data_c.drop('class', axis=1)
+    y = data_c['class']
+    knn = KNeighborsClassifier(n_neighbors=15)
+    sbs = SBS(knn, k_features=1)
+    sbs.fit(X, y)
+    k_feat = [len(k) for k in sbs.subsets_]
+    def plot_function():
+        plt.figure(figsize=(15, 10))
+        plt.plot(k_feat, sbs.scores_, marker='o', color='grey')
+        plt.ylabel('Accuracy')
+        plt.xlabel('Number of Features')
+        plt.title('Sequential Backward Selection')
+        plt.xticks(np.arange(0, 20, 1))
+        plt.grid()
+    save_plot_as_png(plot_function, 'sequential_backward_selection')
+
+# dendrogram clustering for feature selection
+def dendrogram_clustering(data):
+    # extract from purchase value year, month, day, hour, minute, second
+    data['purchase_year'] = data['purchase_time'].dt.year
+    data['purchase_month'] = data['purchase_time'].dt.month
+    data['purchase_day'] = data['purchase_time'].dt.day
+    data['purchase_hour'] = data['purchase_time'].dt.hour
+    data['purchase_minute'] = data['purchase_time'].dt.minute
+    data['purchase_second'] = data['purchase_time'].dt.second
+    # extract from signup value year, month, day, hour, minute, second
+    data['signup_year'] = data['signup_time'].dt.year
+    data['signup_month'] = data['signup_time'].dt.month
+    data['signup_day'] = data['signup_time'].dt.day
+    data['signup_hour'] = data['signup_time'].dt.hour
+    data['signup_minute'] = data['signup_time'].dt.minute
+    data['signup_second'] = data['signup_time'].dt.second
+    device_id_map = data['device_id'].value_counts().to_dict()
+    data['device_id_count'] = data['device_id'].map(device_id_map)
+    source_map = data['source'].value_counts().to_dict()
+    data['source_count'] = data['source'].map(source_map)
+    browser_map = data['browser'].value_counts().to_dict()
+    data['browser_count'] = data['browser'].map(browser_map)
+    sex_map = data['sex'].value_counts().to_dict()
+    data['sex_count'] = data['sex'].map(sex_map)
+    country_map = data['country'].value_counts().to_dict()
+    data['country_count'] = data['country'].map(country_map)
+    # drop unnecessary columns
+    data = data.drop(['signup_time', 'purchase_time', 'device_id', 'user_id', 'source', 'browser', 'sex', 'country', 'purchase_year', 'signup_year', 'ip_address'], axis=1)
+    # balance the data
+    fraud_data = data[data['class'] == 1]
+    not_fraud_data = data[data['class'] == 0]
+    not_fraud_data = not_fraud_data.sample(n=fraud_data.shape[0], random_state=42)
+    data_c = pd.concat([fraud_data, not_fraud_data])
+    # data that are not fraud
+    features = data_c.drop('class', axis=1)
+    labels = data_c['class']
+    # transpose the data
+    features = features.T
+    # standardize the data
+    scaler = StandardScaler()
+    X = scaler.fit_transform(features)
+    # calculate the distance matrix
+    distance_matrix = pdist(X, metric='euclidean')
+    # calculate the linkage matrix
+    linkage_matrix = linkage(distance_matrix, method='complete')
+    # plot the dendrogram
+    def plot_function():
+        plt.figure(figsize=(20, 15))
+        dendrogram(linkage_matrix, labels=features.index, orientation='left')
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        plt.title('Dendrogram of Features')
+        plt.ylabel('Features')
+        plt.xlabel('Distance')
+    save_plot_as_png(plot_function, 'dendrogram_features')
 
 # initialize the python script
 if __name__ == '__main__':
@@ -867,5 +993,7 @@ if __name__ == '__main__':
     #signup_purchase_time_relationship(data)
     #purchase_value_purchase_time_relationship(data)
     #signup_device_id_relationship(data)
-    lda_analysis(data)
+    #lda_analysis(data)
+    #sbs_analysis(data)
+    dendrogram_clustering(data)
 
