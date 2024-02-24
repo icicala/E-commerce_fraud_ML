@@ -203,15 +203,22 @@ def descriptive_statistics_datetime(data):
     for datetime_column in datetime_columns:
         text_output += 'Earliest date ' + datetime_column + ': ' + str(data[datetime_column].min()) + '\n'
         text_output += 'Latest Date ' + datetime_column + ': ' + str(data[datetime_column].max()) + '\n'
-    # Get the month with the most transactions
-    data['month'] = data['purchase_time'].dt.month
-    text_output += 'Month with the most transactions: ' + str(data['month'].mode()[0]) + '\n'
-    # Get the day of the week with the most transactions
-    data['day'] = data['purchase_time'].dt.day
-    text_output += 'Day with the most transactions: ' + str(data['day'].mode()[0]) + '\n'
-    # Get the hour with the most transactions
-    data['hour'] = data['purchase_time'].dt.hour
-    text_output += 'Hour with the most transactions: ' + str(data['hour'].mode()[0]) + '\n'
+
+    data['pmonth'] = data['purchase_time'].dt.month
+    text_output += 'Month with the most transactions: ' + str(data['pmonth'].mode()[0]) + '\n'
+    data['pday'] = data['purchase_time'].dt.day
+    text_output += 'Day with the most transactions: ' + str(data['pday'].mode()[0]) + '\n'
+    data['phour'] = data['purchase_time'].dt.hour
+    text_output += 'Hour with the most transactions: ' + str(data['phour'].mode()[0]) + '\n'
+    # Get the month the signup_time with the most registrations
+    data['smonth'] = data['signup_time'].dt.month
+    text_output += 'Month with the most registrations: ' + str(data['smonth'].mode()[0]) + '\n'
+    # Get the day the signup_time with the most registrations
+    data['sday'] = data['signup_time'].dt.day
+    text_output += 'Day with the most registrations: ' + str(data['sday'].mode()[0]) + '\n'
+    # Get the hour the signup_time with the most registrations
+    data['shour'] = data['signup_time'].dt.hour
+    text_output += 'Hour with the most registrations: ' + str(data['shour'].mode()[0]) + '\n'
     save_to_file('report.txt', text_output)
 
 
@@ -345,7 +352,7 @@ if __name__ == '__main__':
     # Check datetime format
     #check_datetime_format(data_fraud)
     # Descriptive statistics datetime
-    #descriptive_statistics_datetime(data_fraud)
+    descriptive_statistics_datetime(data_fraud)
 ######## IpAddress_to_Country.csv ###########
     # Check Ip Address data type
     #check_ip_address(data_ip)
@@ -366,7 +373,7 @@ if __name__ == '__main__':
     #find_not_found_country(data_transformed)
 ############# Segmentation analysis ########
     # Segmentation analysis
-    segmentation_analysis(data_fraud)
+    #segmentation_analysis(data_fraud)
 
 
 

@@ -20,44 +20,68 @@ def save_plot_as_png(plot_function, plot_name):
     save_file = os.path.join(os.path.dirname(__file__), 'plots', f'{plot_name}_histogram.png')
     plt.savefig(save_file)
     plt.close()
-#histogram for discrete data: purchase_value, age relative frequency
-def histogram_boxplot_discrete(data):
-    # Extract discrete columns
-    discrete_columns = data[['purchase_value', 'age']].columns
+# Histogram and Box plot for discrete data: purchase_value
+def histogram_boxplot_discrete_purchase_value(data):
 
-    # Plot histogram and box plot for each discrete column
-    for col in discrete_columns:
-        def plot_function():
-            # Create a figure composed of two matplotlib.Axes objects (ax_box and ax_hist)
-            f, (ax_box, ax_hist) = plt.subplots(2, sharex=True, gridspec_kw={"height_ratios": (.15, .85)})
+    # Plot histogram and box plot for purchase_value
+    def plot_function():
+        # Create a figure composed of two matplotlib.Axes objects (ax_box and ax_hist)
+        f, (ax_box, ax_hist) = plt.subplots(2, sharex=True, gridspec_kw={"height_ratios": (.15, .85)})
 
-            # Box plot
-            sns.boxplot(data=data, x=col, color='grey', ax=ax_box)
-            ax_box.set(xlabel='')
+        # Box plot
+        sns.boxplot(data=data, x='purchase_value', color='grey', ax=ax_box)
+        ax_box.set(xlabel='')
+        # Histogram with relative frequency
+        sns.histplot(data=data, x='purchase_value', bins=30, color='grey', kde=True, ax=ax_hist, stat='density')
+        # Draw the mean line
+        mean_value = data['purchase_value'].mean()
+        ax_hist.axvline(mean_value, color='black', linestyle='dashed', linewidth=2)
+        # Access the axes and modify the color of the KDE curve
+        ax_hist.lines[0].set_color('red')
+        # Add text label for the mean value
+        ax_hist.text(mean_value, ax_hist.get_ylim()[1], f'Mean: {mean_value:.2f}', color='black', verticalalignment='top')
 
-            # Histogram relative frequency
-            sns.histplot(data=data, x=col, bins=30, color='black', kde=True, ax=ax_hist, stat='density')
-            # Draw the mean line
-            mean_value = data[col].mean()
-            ax_hist.axvline(mean_value, color='black', linestyle='dashed', linewidth=2)
-            # Access the axes and modify the color of the KDE curve
-            ax_hist.lines[0].set_color('red')
-            # Add text label for the mean value
-            ax_hist.text(mean_value, ax_hist.get_ylim()[1], f'Mean: {mean_value:.2f}', color='black', verticalalignment='top')
+        # Customize labels and titles
+        plt.suptitle('Distribution of Purchase Values', y=1.00, fontsize=12)
+        plt.xlabel('Purchase Values (in USD)')
+        plt.ylabel('Relative Frequency')
+        # x-axis ticks every 10 units
+        plt.xticks(np.arange(0, 161, 10))
 
-            # Customize labels and titles
-            plt.suptitle(f'Box plot and Histogram of {col} column', fontsize=12)
-            plt.xlabel(col)
-            plt.ylabel('Relative Frequency')
-
-
-
-            plt.tight_layout()
-
-        # Save the plot as PNG using the save_plot_as_png function
-        save_plot_as_png(plot_function, col)
+        plt.tight_layout()
 
 
+    save_plot_as_png(plot_function, 'purchase_value')
+
+# Histogram and Box plot for discrete data: age
+def histogram_boxplot_discrete_age(data):
+    # Plot histogram and box plot for age
+    def plot_function():
+        # Create a figure composed of two matplotlib.Axes objects (ax_box and ax_hist)
+        f, (ax_box, ax_hist) = plt.subplots(2, sharex=True, gridspec_kw={"height_ratios": (.15, .85)})
+
+        # Box plot
+        sns.boxplot(data=data, x='age', color='grey', ax=ax_box)
+        ax_box.set(xlabel='')
+        # Histogram with relative frequency
+        sns.histplot(data=data, x='age', bins=30, color='grey', kde=True, ax=ax_hist, stat='density')
+        # Draw the mean line
+        mean_value = data['age'].mean()
+        ax_hist.axvline(mean_value, color='grey', linestyle='dashed', linewidth=2)
+        # Access the axes and modify the color of the KDE curve
+        ax_hist.lines[0].set_color('red')
+        # Add text label for the mean value
+        ax_hist.text(mean_value, ax_hist.get_ylim()[1], f'Mean: {mean_value:.2f}', color='black', verticalalignment='top')
+
+        # Customize labels and titles
+        plt.suptitle('Distribution of Age', y=1.00, fontsize=12)
+        plt.xlabel('Age (in years)')
+        plt.ylabel('Relative Frequency')
+        # x-axis ticks every 5 years
+        plt.xticks(np.arange(15, 91, 5))
+        plt.tight_layout()
+
+    save_plot_as_png(plot_function, 'age')
 
 
 # Bar chart for class
@@ -66,47 +90,55 @@ def bar_chart_class(data):
         # Bar plot with relative frequency on the y-axis
         sns.barplot(x=data['class'].value_counts().index, y=data['class'].value_counts(normalize=True), color='grey')
         # Customize labels and titles
-        plt.title('Distribution of Class Variable')
+        plt.title('Distribution of \"Class\" Variable')
         plt.xlabel('Class')
+        # labels for x-axis
+        plt.xticks([0, 1], ['Not Fraud', 'Fraud'])
         plt.ylabel('Relative Frequency')
 
     # Save the plot as PNG using the save_plot_as_png function
     save_plot_as_png(plot_function, 'class')
 
-# Histogram and Box plot for continuous data: signup_time, purchase_time
-def histogram_boxplot_datetime(data):
-    # Extract datetime columns
-    datetime_columns = ['signup_time', 'purchase_time']
+# Box plot and lineplot for time series with relative frequncy: signup_time per month
+def lineplot_boxplot_signup_time(data):
+    def plot_function():
+        # Create a figure composed of two matplotlib.Axes objects (ax_box and ax_line)
+        f, (ax_box, ax_line) = plt.subplots(2, sharex=True, gridspec_kw={"height_ratios": (.15, .85)})
 
-    # Plot histogram and box plot for each datetime column
-    for col in datetime_columns:
-        def plot_function():
-            # Create a figure composed of two matplotlib.Axes objects (ax_box and ax_hist)
-            f, (ax_box, ax_hist) = plt.subplots(2, sharex=True, gridspec_kw={"height_ratios": (.15, .85)})
+        # Box plot
+        sns.boxplot(data=data, x=data['signup_time'].dt.month, color='grey', ax=ax_box)
+        ax_box.set(xlabel='')
+        # Line plot with relative frequency
+        sns.lineplot(data=data['signup_time'].dt.month.value_counts(normalize=True).sort_index(), marker='o', ax=ax_line, color='grey')
+        # Customize labels and titles
+        plt.suptitle('Distribution of Sign-Up Time per Month', y=1.00, fontsize=12)
+        plt.xlabel('Month')
+        plt.xticks(np.arange(1, 9), ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'])
+        plt.ylabel('Relative Frequency')
+        plt.tight_layout()
 
-            # Box plot
-            sns.boxplot(data=data, x=col, color='grey', ax=ax_box)
-            ax_box.set(xlabel='')
-            # Histogram with relative frequency
-            sns.histplot(data=data, x=col, bins=30, color='black', kde=True, ax=ax_hist, stat='density')
-            # Draw the mean line
-            mean_value = data[col].mean()
-            ax_hist.axvline(mean_value, color='black', linestyle='dashed', linewidth=2)
-            # Access the axes and modify the color of the KDE curve
-            ax_hist.lines[0].set_color('red')
-            # Add text label for the mean value
-            ax_hist.text(mean_value, ax_hist.get_ylim()[1], f'Mean: {mean_value:.2f}', color='black', verticalalignment='top')
+    save_plot_as_png(plot_function, 'signup_time_month')
 
-            # Customize labels and titles
-            plt.suptitle(f'Box plot and Histogram of {col} column', y=1.00, fontsize=12)
-            plt.xlabel(col)
-            plt.ylabel('Relative Frequency')
+# Box plot and lineplot for time series with relative frequncy: purchase_time per month
+def lineplot_boxplot_purchase_time(data):
+    def plot_function():
+        # Create a figure composed of two matplotlib.Axes objects (ax_box and ax_line)
+        f, (ax_box, ax_line) = plt.subplots(2, sharex=True, gridspec_kw={"height_ratios": (.15, .85)})
 
-            plt.tight_layout()
+        # Box plot
+        sns.boxplot(data=data, x=data['purchase_time'].dt.month, color='grey', ax=ax_box)
+        ax_box.set(xlabel='')
+        # Line plot with relative frequency
+        sns.lineplot(data=data['purchase_time'].dt.month.value_counts(normalize=True).sort_index(), marker='o', ax=ax_line, color='grey')
+        # Customize labels and titles
+        plt.suptitle('Distribution of Purchase Time per Month', y=1.00, fontsize=12)
+        plt.xlabel('Month')
+        plt.xticks(np.arange(1, 13), ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
+        plt.ylabel('Relative Frequency')
+        plt.tight_layout()
 
+    save_plot_as_png(plot_function, 'purchase_time_month')
 
-        # Save the plot as PNG using the save_plot_as_png function
-        save_plot_as_png(plot_function, col)
 
 # Bar chart for categorical data: sex, source, browser
 def bar_chart_categorical(data):
@@ -121,7 +153,8 @@ def bar_chart_categorical(data):
             sns.barplot(x=data[col].value_counts().index, y=data[col].value_counts(normalize=True), color='grey')
             # Customize labels and titles
             plt.title(f'Distribution of {col} variable')
-            plt.xlabel(col)
+            # col name (per category)
+            plt.xlabel(col.strip().capitalize())
             plt.ylabel('Relative Frequency')
         save_plot_as_png(plot_function, col)
 
@@ -206,13 +239,15 @@ def histogram_user_id(data):
 if __name__ == '__main__':
     dataset = load_efraud_dataset('EFraud_Data_Country.csv')
     # Histograms and boxplot for numerical data
-    #histogram_boxplot_discrete(dataset)
+    # histogram_boxplot_discrete_purchase_value(dataset)
+    # histogram_boxplot_discrete_age(dataset)
     # bar chart for class
-    #bar_chart_class(dataset)
+    bar_chart_class(dataset)
     # Histogram and Box plot for datetime data
-    #histogram_boxplot_datetime(dataset)
+    #lineplot_boxplot_signup_time(dataset)
+    # lineplot_boxplot_purchase_time(dataset)
     # Bar chart for categorical data
-    #bar_chart_categorical(dataset)
+    # bar_chart_categorical(dataset)
     # Bar chart for country
     #bar_chart_country(dataset)
     # histogram for user_id
