@@ -62,60 +62,39 @@ def data_profiling_report(data):
 # Count plot of class and discrete numerical features using relative frequency
 def relationship_between_numerical_features_and_label(data):
     def plot_age():
-        # custom palette
         custom_palette = ['grey', 'coral']
-        # count plot of age and class
         ax = sns.countplot(data=data, x='age', hue='class', stat='proportion', palette=custom_palette)
-        # Set the title
-        plt.title('Count Plot of Age and Class')
-        # Set x-axis label
-        plt.xlabel('Age')
-        # Set y-axis label
+        plt.title('Correlation between Age and Class')
+        plt.xlabel('Age (in years')
         plt.ylabel('Relative Frequency')
-        # Show the legend with class meaning 0: Not Fraud, 1: Fraud
         plt.legend(title='Class', loc='upper right', labels=['Not Fraud', 'Fraud'])
-        # fix the problem cluttering the x-axis by showing every every second age
         for ind, label in enumerate(ax.get_xticklabels()):
-            # descriptive statiscs of the age
             age_descriptive_stats = data['age'].describe()
-            # remove all data from x-axis
             ax.xticks = []
-            # show only the minimum, maximum and mean age, Q1 and Q3 on the x-axis
             if label.get_text() in [str(int(age_descriptive_stats['min'])), str(int(age_descriptive_stats['25%'])),
                                     str(int(age_descriptive_stats['75%'])), str(int(age_descriptive_stats['max'])),
                                     str(int(age_descriptive_stats['mean']))]:
                 label.set_visible(True)
             else:
                 label.set_visible(False)
-        # point-biserial correlation between age and class
         corr_coeff, p_value = pointbiserialr(data['age'], data['class'])
-        # put the correlation coefficient and p-value on the plot
         plt.text(0.5, 0.5, 'Correlation Coefficient: %.2f\nP-value: %.2f' % (corr_coeff, p_value),
                  horizontalalignment='left', verticalalignment='center', transform=plt.gca().transAxes)
-        # save the plot as png
 
     save_plot_as_png(plot_age, 'countplot_age')
 
     def plot_purchase_value():
-        # custom palette
+
         custom_palette = ['grey', 'coral']
-        # count plot of purchase_value and class
         ax = sns.countplot(data=data, x='purchase_value', hue='class', stat='proportion', palette=custom_palette)
-        # Set the title
-        plt.title('Count Plot of Purchase Value and Class')
-        # Set x-axis label
-        plt.xlabel('Purchase Value')
-        # Set y-axis label
+
+        plt.title('Correlation between Purchase Value and Class')
+        plt.xlabel('Purchase Value (in USD)')
         plt.ylabel('Relative Frequency')
-        # Show the legend with class meaning 0: Not Fraud, 1: Fraud
         plt.legend(title='Class', loc='upper right', labels=['Not Fraud', 'Fraud'])
-        # fix the problem cluttering the x-axis by showing every every second purchase_value
         for ind, label in enumerate(ax.get_xticklabels()):
-            # descriptive statiscs of the purchase_value
             purchase_value_descriptive_stats = data['purchase_value'].describe()
-            # remove all data from x-axis
             ax.xticks = []
-            # show only the minimum, maximum and mean purchase_value, Q1 and Q3 on the x-axis
             if label.get_text() in [str(int(purchase_value_descriptive_stats['min'])),
                                     str(int(purchase_value_descriptive_stats['25%'])),
                                     str(int(purchase_value_descriptive_stats['75%'])),
@@ -124,200 +103,239 @@ def relationship_between_numerical_features_and_label(data):
                 label.set_visible(True)
             else:
                 label.set_visible(False)
-        # point-biserial correlation between purchase_value and class
         corr_coeff, p_value = pointbiserialr(data['purchase_value'], data['class'])
-        # put the correlation coefficient and p-value on the plot
         plt.text(0.5, 0.5, 'Correlation Coefficient: %.2f\nP-value: %.2f' % (corr_coeff, p_value),
                  horizontalalignment='left', verticalalignment='center', transform=plt.gca().transAxes)
-        # save the plot as png
 
     save_plot_as_png(plot_purchase_value, 'countplot_purchase_value')
 
 
-# kernel density plot of correlation between datetime features(signup_time, purchase_time) and label(class) column
+# count plot of correlation between datetime features(signup_time, purchase_time) and label(class) column
 def relationship_between_datetime_features_and_label(data):
     def plot_signup_time():
-        # Convert inf values to NaN before operating
-        data['signup_time'] = data['signup_time'].replace([np.inf, -np.inf], np.nan)
-        # Set up the figure
-        plt.figure(figsize=(12, 8))
-        # custom palette
-        custom_palette = ['black', 'coral']
-        # Create ridgeline plot
-        sns.kdeplot(data=data, x='signup_time', hue='class', fill=True, common_norm=True, alpha=0.3,
-                    palette=custom_palette)
-        # Set the title
-        plt.title('Grouped Kernel Density Plot of Sign Up Time')
-        # Set x-axis label
-        plt.xlabel('Sign Up Time')
-        # Set y-axis label
-        plt.ylabel('Frequency')
-        # change the 0 not fraud and 1 fraud
-        plt.legend(title='Class', loc='upper right', labels=['Fraud', 'Not Fraud'])
+        data['month'] = data['signup_time'].dt.month
+        monthly_data = data.groupby(['month', 'class']).size().unstack(fill_value=0)
+        monthly_data_relative = monthly_data.divide(monthly_data.sum(axis=0).sum(), axis=0)
+        plt.figure(figsize=(14, 7))
+        custom_palette = ['grey', 'coral']
+        sns.lineplot(data=monthly_data_relative, marker='o', palette=custom_palette, dashes=False, markersize=10, linewidth=2)
+        plt.title('Relationship between Signup Time and Class per Month')
+        plt.xlabel('Month')
+        plt.ylabel('Relative Frequency')
+        plt.xticks(ticks=range(1, 9), labels=[
+            'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+            'Jul', 'Aug'])
 
-    save_plot_as_png(plot_signup_time, 'kde_signup_time')
+        plt.legend(title='Class', loc='upper right', handles=[
+            plt.Line2D([], [], color='grey', marker='o', linestyle='None', markersize=10, label='Not Fraud'),
+            plt.Line2D([], [], color='coral', marker='o', linestyle='None', markersize=10, label='Fraud')
+        ])
+
+        plt.grid(True)
+
+    save_plot_as_png(plot_signup_time, 'lineplot_signup_time')
 
     def plot_purchase_time():
-        # Convert inf values to NaN before operating
-        data['purchase_time'] = data['purchase_time'].replace([np.inf, -np.inf], np.nan)
-        plt.figure(figsize=(12, 8))
-        # custom palette
-        custom_palette = ['black', 'coral']
-        # Create ridgeline plot
-        sns.kdeplot(data=data, x='purchase_time', hue='class', fill=True, common_norm=True, alpha=0.3,
-                    palette=custom_palette)
-        # Set the title
-        plt.title('Grouped Kernel Density Plot of Purchase Time')
-        # Set x-axis label
-        plt.xlabel('Purchase Time')
-        # Set y-axis label
-        plt.ylabel('Frequency')
-        # change the 0 not fraud and 1 fraud
-        plt.legend(title='Class', loc='upper right', labels=['Fraud', 'Not Fraud'])
+        data['month'] = data['purchase_time'].dt.month
+        monthly_data = data.groupby(['month', 'class']).size().unstack(fill_value=0)
+        monthly_data_relative = monthly_data.divide(monthly_data.sum(axis=0).sum(), axis=0)
+        plt.figure(figsize=(14, 7))
+        custom_palette = ['grey', 'coral']
+        sns.lineplot(data=monthly_data_relative, marker='o', palette=custom_palette, dashes=False, markersize=10, linewidth=2)
+        plt.title('Relationship between Purchase Time and Class per Month')
+        plt.xlabel('Month')
+        plt.ylabel('Relative Frequency')
+        plt.xticks(ticks=range(1, 13), labels=[
+            'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
 
-    save_plot_as_png(plot_purchase_time, 'kde_purchase_time')
+        plt.legend(title='Class', loc='upper right', handles=[
+            plt.Line2D([], [], color='grey', marker='o', linestyle='None', markersize=10, label='Not Fraud'),
+            plt.Line2D([], [], color='coral', marker='o', linestyle='None', markersize=10, label='Fraud')
+        ])
 
+        plt.grid(True)
 
-# KDE sign up time day of the week and class
-def plot_sign_up_dateweek_features(data):
+    save_plot_as_png(plot_purchase_time, 'lineplot_purchase_time')
+
+# lineplot of signup time weekly and class
+def plot_sign_up_weekly(data):
     def plot_function():
-        datetime_columns = data[['signup_time', 'purchase_time', 'class']].copy()
-        pd.set_option('display.max_columns', None)
-        # Extract day of the week component
-        datetime_columns['signup_day_of_week'] = datetime_columns['signup_time'].dt.dayofweek
-        # Set up the figure
-        plt.figure(figsize=(12, 8))
-        # custom palette
-        custom_palette = ['black', 'coral']
-        # Create KDE plot for the day of the week component
-        sns.kdeplot(data=datetime_columns, x='signup_day_of_week', hue='class', fill=True, common_norm=True, alpha=0.3,
-                    palette=custom_palette)
-        # legent to show class meaning 0: Not Fraud, 1: Fraud
-        plt.legend(title='Class', loc='upper right', labels=['Fraud', 'Not Fraud'])
-        # legend to show xaxis meaning 0: Monday, 1: Tuesday, 2: Wednesday, 3: Thursday, 4: Friday, 5: Saturday, 6: Sunday
-        plt.xticks(np.arange(7), ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'])
-        # set the x axis from 0 to 6
-        plt.xlim(0, 6)
-        # Set the title
-        plt.title('KDE Plot of Sign Up Day of the Week')
-        # Set x-axis label
-        plt.xlabel('Sign Up Day of the Week')
-        # Set y-axis label
-        plt.ylabel('Frequency')
-        # point-biserial correlation between signup_day_of_week:0-Monday, 1-Tue and class: 0-Not Fraud, 1-Fraud
-        corr_coeff, p_value = pointbiserialr(datetime_columns['signup_day_of_week'], datetime_columns['class'])
-        # put the correlation coefficient and p-value on the plot
-        plt.text(0.5, 0.5, 'Correlation Coefficient: %.2f\nP-value: %.2f' % (corr_coeff, p_value),
-                 horizontalalignment='center', verticalalignment='center', transform=plt.gca().transAxes)
+        # Create a new column 'signup_day_of_week' to categorize the day of the week
+        data['signup_week'] = data['signup_time'].dt.isocalendar().week
+        weekly_data = data.groupby(['signup_week', 'class']).size().unstack(fill_value=0)
+        weekly_data_relative = weekly_data.divide(weekly_data.sum(axis=0).sum(), axis=0)
+        plt.figure(figsize=(14, 7))
+        custom_palette = ['grey', 'coral']
+        sns.lineplot(data=weekly_data_relative, marker='o', palette=custom_palette, dashes=False, markersize=10, linewidth=2)
+        plt.title('Relationship between Signup Time and Class per Week')
+        plt.xlabel('Week')
+        # x-axis from 1 to 52
+        plt.xticks(ticks=range(1, 35))
+        plt.ylabel('Relative Frequency')
+        plt.legend(title='Class', loc='upper right', handles=[
+            plt.Line2D([], [], color='grey', marker='o', linestyle='None', markersize=10, label='Not Fraud'),
+            plt.Line2D([], [], color='coral', marker='o', linestyle='None', markersize=10, label='Fraud')
+        ])
+        plt.grid(True)
 
-    save_plot_as_png(plot_function, 'signup_kdeplot_day_of_week')
+    save_plot_as_png(plot_function, 'lineplot_signup_week')
 
+# Line plot of signup time day of the month and class
+def plot_sign_up_daymonth_features(data):
+    def plot_signup_day():
+        # day of the month
+        data['signup_day'] = data['signup_time'].dt.day
+        daily_data = data.groupby(['signup_day', 'class']).size().unstack(fill_value=0)
+        daily_data_relative = daily_data.divide(daily_data.sum(axis=0).sum(), axis=0)
+        plt.figure(figsize=(14, 7))
+        custom_palette = ['grey', 'coral']
+        sns.lineplot(data=daily_data_relative, marker='o', palette=custom_palette, dashes=False, markersize=10, linewidth=2)
+        plt.title('Relationship between Signup Time and Class per Day of the Month')
+        plt.xlabel('Day of the Month')
+        plt.ylabel('Relative Frequency')
+        # x-axis from 1 to 31
+        plt.xticks(ticks=range(1, 32))
+        plt.legend(title='Class', loc='upper right', handles=[
+            plt.Line2D([], [], color='grey', marker='o', linestyle='None', markersize=10, label='Not Fraud'),
+            plt.Line2D([], [], color='coral', marker='o', linestyle='None', markersize=10, label='Fraud')
+        ])
+        plt.grid(True)
+
+    save_plot_as_png(plot_signup_day, 'lineplot_signup_day')
+
+# Line plot of signup day of the week and class
+def plot_sign_up_dateweek_features(data):
+    def plot_signup_day():
+        # filter fraud transactions
+        fraud_data = data[data['class'] == 1].copy()
+        fraud_data['signup_day_of_week'] = fraud_data['signup_time'].dt.dayofweek
+        daily_data = fraud_data.groupby(['signup_day_of_week', 'class']).size().unstack(fill_value=0)
+        daily_data_relative = daily_data.divide(daily_data.sum(axis=0).sum(), axis=0)
+        plt.figure(figsize=(14, 7))
+        custom_palette = ['coral']
+        sns.lineplot(data=daily_data_relative, marker='o', palette=custom_palette, dashes=False, markersize=10, linewidth=2)
+        plt.title('Relationship between Signup Time and Fraud transactions per Day')
+        plt.xlabel('Day of the Week')
+        plt.ylabel('Fraud Relative Frequency')
+        # remove legend
+        plt.legend().remove()
+        plt.xticks(ticks=range(0, 7), labels=['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'])
+        plt.grid(True)
+
+    save_plot_as_png(plot_signup_day, 'lineplot_signup_day_of_week')
+# line plot of signup time hour of the day and class
+def plot_sign_up_datehours_features(data):
+    def plot_signup_hour():
+        # filter fraud transactions
+        fraud_data = data[data['class'] == 1].copy()
+        fraud_data['signup_hour'] = fraud_data['signup_time'].dt.hour
+        hourly_data = fraud_data.groupby(['signup_hour', 'class']).size().unstack(fill_value=0)
+        hourly_data_relative = hourly_data.divide(hourly_data.sum(axis=0).sum(), axis=0)
+        plt.figure(figsize=(14, 7))
+        custom_palette = ['coral']
+        sns.lineplot(data=hourly_data_relative, marker='o', palette=custom_palette, dashes=False, markersize=10, linewidth=2)
+        plt.title('Relationship between Signup Time and Fraud transactions per Hour')
+        plt.xlabel('Hour of the Day')
+        plt.ylabel('Fraud Relative Frequency')
+        # remove legend
+        plt.legend().remove()
+        plt.xticks(ticks=range(0, 24))
+        plt.grid(True)
+
+    save_plot_as_png(plot_signup_hour, 'lineplot_signup_hour')
 
 # kde plot hours of the day(signup_time) and class
-def plot_sign_up_datehours_features(data):
-    def plot_function():
-        datetime_columns = data[['signup_time', 'purchase_time', 'class']].copy()
-        pd.set_option('display.max_columns', None)
-        # Extract time component (hour) from signup_time
-        datetime_columns['signup_hour'] = datetime_columns['signup_time'].dt.hour
-        # Set up the figure
-        plt.figure(figsize=(12, 8))
-        # custom palette
-        custom_palette = ['black', 'coral']
-        # Create KDE plot for the time component (hour)
-        sns.kdeplot(data=datetime_columns, x='signup_hour', hue='class', fill=True, common_norm=True, alpha=0.3,
-                    palette=custom_palette)
-        # Legend to show class meaning 0: Not Fraud, 1: Fraud
-        plt.legend(title='Class', loc='upper right', labels=['Fraud', 'Not Fraud'])
-        # Set the x axis from 0 to 23
-        plt.xlim(0, 23)
-        # set the x axis all the hours of the day
-        plt.xticks(np.arange(24))
-        # Set the title
-        plt.title('KDE Plot of Sign Up Hour of the Day')
-        # Set x-axis label
-        plt.xlabel('Sign Up Hour of the Day')
-        # Set y-axis label
-        plt.ylabel('Frequency')
-        # point-biserial correlation between signup_hour and class
-        corr_coeff, p_value = pointbiserialr(datetime_columns['signup_hour'], datetime_columns['class'])
-        # put the correlation coefficient and p-value on the plot
-        plt.text(0.5, 0.5, 'Correlation Coefficient: %.2f\nP-value: %.2f' % (corr_coeff, p_value),
-                 horizontalalignment='center', verticalalignment='center', transform=plt.gca().transAxes)
-
-    save_plot_as_png(plot_function, 'signup_kdeplot_hour_of_day')
 
 
-# KDE plot purchase time day of the week and class
+
+# line plot of purchase time week of the year and class
+def plot_purchase_weekly(data):
+    def function_plot():
+        # Create a new column 'purchase_week' to categorize the week of the year
+        data['purchase_week'] = data['purchase_time'].dt.isocalendar().week
+        weekly_data = data.groupby(['purchase_week', 'class']).size().unstack(fill_value=0)
+        weekly_data_relative = weekly_data.divide(weekly_data.sum(axis=0).sum(), axis=0)
+        plt.figure(figsize=(14, 7))
+        custom_palette = ['grey', 'coral']
+        sns.lineplot(data=weekly_data_relative, marker='o', palette=custom_palette, dashes=False, markersize=10, linewidth=2)
+        plt.title('Relationship between Purchase Time and Class per Week')
+        plt.xlabel('Week')
+        plt.ylabel('Relative Frequency')
+        plt.xticks(ticks=range(1, 53))
+        plt.legend(title='Class', loc='upper right', handles=[
+            plt.Line2D([], [], color='grey', marker='o', linestyle='None', markersize=10, label='Not Fraud'),
+            plt.Line2D([], [], color='coral', marker='o', linestyle='None', markersize=10, label='Fraud')
+        ])
+        plt.grid(True)
+
+    save_plot_as_png(function_plot, 'lineplot_purchase_week')
+
+# line plot of purchase time day of the month and class
+def plot_purchase_daymonth_features(data):
+    def plot_purchase_day():
+        # day of the month
+        data['purchase_day'] = data['purchase_time'].dt.day
+        daily_data = data.groupby(['purchase_day', 'class']).size().unstack(fill_value=0)
+        daily_data_relative = daily_data.divide(daily_data.sum(axis=0).sum(), axis=0)
+        plt.figure(figsize=(14, 7))
+        custom_palette = ['grey', 'coral']
+        sns.lineplot(data=daily_data_relative, marker='o', palette=custom_palette, dashes=False, markersize=10, linewidth=2)
+        plt.title('Relationship between Purchase Time and Class per Day of the Month')
+        plt.xlabel('Day of the Month')
+        plt.ylabel('Relative Frequency')
+        plt.xticks(ticks=range(1, 32))
+        plt.legend(title='Class', loc='upper right', handles=[
+            plt.Line2D([], [], color='grey', marker='o', linestyle='None', markersize=10, label='Not Fraud'),
+            plt.Line2D([], [], color='coral', marker='o', linestyle='None', markersize=10, label='Fraud')
+        ])
+        plt.grid(True)
+
+    save_plot_as_png(plot_purchase_day, 'lineplot_purchase_day')
+
+
+# line plot of purchase time day of the week and class
 def plot_purchase_dateweek_features(data):
-    def plot_function():
-        datetime_columns = data[['signup_time', 'purchase_time', 'class']].copy()
-        pd.set_option('display.max_columns', None)
-        # Extract day of the week component
-        datetime_columns['purchase_day_of_week'] = datetime_columns['purchase_time'].dt.dayofweek
-        # Set up the figure
-        plt.figure(figsize=(12, 8))
-        # custom palette
-        custom_palette = ['black', 'coral']
-        # Create KDE plot for the day of the week component
-        sns.kdeplot(data=datetime_columns, x='purchase_day_of_week', hue='class', fill=True, common_norm=True,
-                    alpha=0.3, palette=custom_palette)
-        # legent to show class meaning 0: Not Fraud, 1: Fraud
-        plt.legend(title='Class', loc='upper right', labels=['Fraud', 'Not Fraud'])
-        # legend to show xaxis meaning 0: Monday, 1: Tuesday, 2: Wednesday, 3: Thursday, 4: Friday, 5: Saturday, 6: Sunday
-        plt.xticks(np.arange(7), ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'])
-        # set the x axis from 0 to 6
-        plt.xlim(0, 6)
-        # Set the title
-        plt.title('KDE Plot of Purchase Day of the Week')
-        # Set x-axis label
-        plt.xlabel('Purchase Day of the Week')
-        # Set y-axis label
-        plt.ylabel('Frequency')
-        # point-biserial correlation between purchase_day_of_week and class
-        corr_coeff, p_value = pointbiserialr(datetime_columns['purchase_day_of_week'], datetime_columns['class'])
-        # put the correlation coefficient and p-value on the plot
-        plt.text(0.5, 0.5, 'Correlation Coefficient: %.2f\nP-value: %.2f' % (corr_coeff, p_value),
-                 horizontalalignment='center', verticalalignment='center', transform=plt.gca().transAxes)
+    def plot_purchase_day():
+        # filter fraud transactions
 
-    save_plot_as_png(plot_function, 'purchase_kdeplot_day_of_week')
+        data['purchase_day_of_week'] = data['purchase_time'].dt.dayofweek
+        daily_data = data.groupby(['purchase_day_of_week', 'class']).size().unstack(fill_value=0)
+        daily_data_relative = daily_data.divide(daily_data.sum(axis=0).sum(), axis=0)
+        plt.figure(figsize=(14, 7))
+        custom_palette = ['grey', 'coral']
+        sns.lineplot(data=daily_data_relative, marker='o', palette=custom_palette, dashes=False, markersize=10, linewidth=2)
+        plt.title('Relationship between Purchase Time and Fraud transactions per Day')
+        plt.xlabel('Day of the Week')
+        plt.ylabel('Fraud Relative Frequency')
+        plt.legend(title='Class', loc='upper right', handles=[
+            plt.Line2D([], [], color='grey', marker='o', linestyle='None', markersize=10, label='Not Fraud'),
+            plt.Line2D([], [], color='coral', marker='o', linestyle='None', markersize=10, label='Fraud')
+        ])
+        plt.xticks(ticks=range(0, 7), labels=['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'])
+        plt.grid(True)
 
+    save_plot_as_png(plot_purchase_day, 'lineplot_purchase_day_of_week')
 
-# KDE plot purchase time hour of the day and class
+# line plot of purchase time hour of the day and class
 def plot_purchase_datehours_features(data):
-    def plot_function():
-        datetime_columns = data[['signup_time', 'purchase_time', 'class']].copy()
-        pd.set_option('display.max_columns', None)
-        # Extract time component (hour) from signup_time
-        datetime_columns['purchase_hour'] = datetime_columns['purchase_time'].dt.hour
-        # Set up the figure
-        plt.figure(figsize=(12, 8))
-        # custom palette
-        custom_palette = ['black', 'coral']
-        # Create KDE plot for the time component (hour)
-        sns.kdeplot(data=datetime_columns, x='purchase_hour', hue='class', fill=True, common_norm=True, alpha=0.3,
-                    palette=custom_palette)
-        # Legend to show class meaning 0: Not Fraud, 1: Fraud
-        plt.legend(title='Class', loc='upper right', labels=['Fraud', 'Not Fraud'])
-        # Set the x axis from 0 to 23
-        plt.xlim(0, 23)
-        # set the x axis all the hours of the day
-        plt.xticks(np.arange(24))
-        # Set the title
-        plt.title('KDE Plot of Purchase Hour of the Day')
-        # Set x-axis label
-        plt.xlabel('Purchase Hour of the Day')
-        # Set y-axis label
-        plt.ylabel('Frequency')
-        # point-biserial correlation between purchase_hour and class
-        corr_coeff, p_value = pointbiserialr(datetime_columns['purchase_hour'], datetime_columns['class'])
-        # put the correlation coefficient and p-value on the plot
-        plt.text(0.5, 0.5, 'Correlation Coefficient: %.2f\nP-value: %.2f' % (corr_coeff, p_value),
-                 horizontalalignment='center', verticalalignment='center', transform=plt.gca().transAxes)
+    def plot_purchase_hour():
+        # filter fraud transactions
+        fraud_data = data[data['class'] == 1].copy()
+        fraud_data['purchase_hour'] = fraud_data['purchase_time'].dt.hour
+        hourly_data = fraud_data.groupby(['purchase_hour', 'class']).size().unstack(fill_value=0)
+        hourly_data_relative = hourly_data.divide(hourly_data.sum(axis=0).sum(), axis=0)
+        plt.figure(figsize=(14, 7))
+        custom_palette = ['coral']
+        sns.lineplot(data=hourly_data_relative, marker='o', palette=custom_palette, dashes=False, markersize=10, linewidth=2)
+        plt.title('Relationship between Purchase Time and Fraud transactions per Hour')
+        plt.xlabel('Hour of the Day')
+        plt.ylabel('Fraud Relative Frequency')
+        plt.xticks(ticks=range(0, 24))
+        plt.grid(True)
+        plt.legend().remove()
 
-    save_plot_as_png(plot_function, 'purchase_kdeplot_hour_of_day')
-
-
+    save_plot_as_png(plot_purchase_hour, 'lineplot_purchase_hour')
 # Heatmap with relative frequncy and total, cramer's V of categorical source and class
 def cramer_v_categorical_source(data):
     def plot_function():
@@ -955,17 +973,19 @@ def dendrogram_clustering(data):
 if __name__ == '__main__':
     data = load_efraud_dataset('EFraud_Data_Country.csv')
     # data_profiling_report(data)
+################# Bi-variate Analysis ####################
+#################Numerical-Claas Analysis ################
     # relationship_between_numerical_features_and_label(data)
-    # relationship_between_datetime_features_and_label(data)
-
-    # kde plot sign up time and class
+################# Temporal - Class Analysis ################
+    #relationship_between_datetime_features_and_label(data)
+    # plot_sign_up_weekly(data)
+    # plot_sign_up_daymonth_features(data)
     # plot_sign_up_dateweek_features(data)
-    # kde plot hours of the day(signup_time) and class
     # plot_sign_up_datehours_features(data)
-    # kde plot purchase date of the week and class
+    # plot_purchase_weekly(data)
+    # plot_purchase_daymonth_features(data)
     # plot_purchase_dateweek_features(data)
-    # kde plot purchase time hour of the day and class
-    # plot_purchase_datehours_features(data)
+    plot_purchase_datehours_features(data)
     # Heatmap with cramer's V of categorical source and class
     # cramer_v_categorical_source(data)
     # Heatmap with cramer' V of categorical sex and class
@@ -995,5 +1015,5 @@ if __name__ == '__main__':
     #signup_device_id_relationship(data)
     #lda_analysis(data)
     #sbs_analysis(data)
-    dendrogram_clustering(data)
+    #dendrogram_clustering(data)
 
