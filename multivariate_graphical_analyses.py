@@ -753,6 +753,7 @@ def signup_device_id_relationship(data):
         plt.xticks([0, 1], ['Not Fraud', 'Fraud'])
 
     save_plot_as_png(plot_function, 'stripplot_device_id_class')
+
 # Linear Discrimant Analysis
 def lda_analysis(data):
 
@@ -960,6 +961,22 @@ def ip_address_user_id_count(data):
 
 
     save_plot_as_png(plot_function, 'histogram_ip_address_user_id_count')
+
+
+
+def number_user_id_per_purchase_time(data):
+    def plot_function():
+        purchase_counts = data.groupby(['purchase_time', 'class'])['user_id'].count().reset_index()
+        custom_palette = ['grey', 'coral']
+        plt.figure(figsize=(12, 8))
+        sns.pointplot(data=purchase_counts, x='class', y='user_id', color='coral', join=False, markers='o', dodge=True, linestyle="none")
+        plt.title('Number of Users per Purchase Time')
+        plt.xlabel('Class')
+        plt.ylabel('Number of User IDs')
+        plt.yticks([])
+        plt.xticks([0, 1], ['Not Fraud', 'Fraud'])
+
+    save_plot_as_png(plot_function, 'stripplot_purchase_time_user_id')
 # initialize the python script
 if __name__ == '__main__':
     data = load_efraud_dataset('EFraud_Data_Country.csv')
@@ -993,14 +1010,14 @@ if __name__ == '__main__':
     # violin_country_age(data)
     # scatter_plot_age_purchase_value(data)
     ############ Categorical-Categorical Analysis ################
-    number_user_id_per_device_id(data)
+    # number_user_id_per_device_id(data)
     # source_browser_relationship(data)
     # source_country_relationship(data)
     #browser_device_id_relationship(data)
     #country_browser_relationship(data)
     #signup_purchase_time_relationship(data)
     #purchase_value_purchase_time_relationship(data)
-    #signup_device_id_relationship(data)
+    # signup_device_id_relationship(data)
     #lda_analysis(data)
     #sbs_analysis(data)
     #dendrogram_clustering(data)
