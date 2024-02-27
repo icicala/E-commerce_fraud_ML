@@ -27,7 +27,6 @@ def dublicates_values(data):
     text_output = '##################################\n'
     text_output += 'Missing Values'
     text_output += '##################################\n'
-
     duplicate_columns = data.columns.duplicated().sum()
     duplicate_rows = data.duplicated(subset='user_id').sum()
     text_output += 'Duplicate Columns:'
@@ -66,11 +65,15 @@ def tukey_method(data, column):
     text_output += str(outliers) + '\n'
     save_to_file('report.txt', text_output)
 
+
+
 if __name__ == '__main__':
     data = read_data('EFraud_Data_Country.csv')
     #dublicates_values(data)
     #time_difference(data)
-    tukey_method(data, 'purchase_value')
-    tukey_method(data, 'age')
+    # tukey_method(data, 'purchase_value')
+    # tukey_method(data, 'age')
+############ Feature Engineering ################
+
 
 
