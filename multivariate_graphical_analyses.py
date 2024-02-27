@@ -4,6 +4,7 @@ import seaborn as sns
 import pandas as pd
 import os
 from kfda import Kfda, kfda
+from matplotlib.ticker import MaxNLocator, FormatStrFormatter
 from scipy.cluster.hierarchy import linkage, dendrogram
 
 from scipy.linalg import eigh
@@ -341,20 +342,15 @@ def cramer_v_categorical_source(data):
     def plot_function():
         # create contingency table for source and class columns with relative frequency and total
         contingency_table = pd.crosstab(data['source'], data['class'], normalize=True, margins=True)
-        # custom cmap
+
         custom_palette = sns.diverging_palette(220, 20, as_cmap=True)
-        # Plot the heatmap
         sns.heatmap(contingency_table, annot=True, fmt=".2f", cmap=custom_palette)
-        # Set x-axis label
         plt.xlabel('Class')
-        # Set y-axis label
         plt.ylabel('Source')
-        # Set custom x-axis labels
         plt.xticks([0.5, 1.5, 2.5], ['Not Fraud', 'Fraud', 'All'], rotation=0)
-        # Calculate Cramer's V  value
         cross_tab = pd.crosstab(data['source'], data['class'])
         cramer_v_value = association(cross_tab.values, method='cramer')
-        # set the title with Cramer's V value
+
         plt.title(f'Heatmap of Source and Class\nCramer\'s V: {cramer_v_value:.4f}')
 
     # Save the plot as PNG
@@ -366,20 +362,14 @@ def cramer_v_categorical_sex(data):
     def plot_function():
         # create contingency table for sex and class columns with relative frequency and total
         contingency_table = pd.crosstab(data['sex'], data['class'], normalize=True, margins=True)
-        # custom cmap
         custom_palette = sns.diverging_palette(220, 20, as_cmap=True)
-        # Plot the heatmap
         sns.heatmap(contingency_table, annot=True, fmt=".2f", cmap=custom_palette)
-        # Set x-axis label
         plt.xlabel('Class')
-        # Set y-axis label
         plt.ylabel('Sex')
-        # Set custom x-axis labels
         plt.xticks([0.5, 1.5, 2.5], ['Not Fraud', 'Fraud', 'All'], rotation=0)
-        # Calculate Cramer's V  value
         cross_tab = pd.crosstab(data['sex'], data['class'])
         cramer_v_value = association(cross_tab.values, method='cramer')
-        # set the title with Cramer's V value
+
         plt.title(f'Heatmap of Sex and Class\nCramer\'s V: {cramer_v_value:.4f}')
 
     # Save the plot as PNG
@@ -389,29 +379,22 @@ def cramer_v_categorical_sex(data):
 # Heatmap with relative frequncy and total, cramer's V of categorical browser and class column
 def cramer_v_categorical_browser(data):
     def plot_function():
-        # create contingency table for browser and class columns with relative frequency and total
+
         contingency_table = pd.crosstab(data['browser'], data['class'], normalize=True, margins=True)
-        # custom cmap
+
         custom_palette = sns.diverging_palette(220, 20, as_cmap=True)
-        # Plot the heatmap
         sns.heatmap(contingency_table, annot=True, fmt=".3f", cmap=custom_palette)
-        # Set x-axis label
         plt.xlabel('Class')
-        # Set y-axis label
         plt.ylabel('Browser')
-        # Set custom x-axis labels
         plt.xticks([0.5, 1.5, 2.5], ['Not Fraud', 'Fraud', 'All'], rotation=0)
-        # Calculate Cramer's V  value
         cross_tab = pd.crosstab(data['browser'], data['class'])
         cramer_v_value = association(cross_tab.values, method='cramer')
-        # set the title with Cramer's V value
         plt.title(f'Heatmap of Browser and Class\nCramer\'s V: {cramer_v_value:.4f}')
-
     # Save the plot as PNG
     save_plot_as_png(plot_function, 'heatmap_categorical_browser')
 
 
-# Heatmap with cramer's V of categorical device_id and class column
+
 # Function to map categorical device_id to numeric values
 def map_device_id(data):
     device_id_mapping = {device_id: i for i, device_id in enumerate(data['device_id'].unique())}
@@ -453,101 +436,104 @@ def cramer_v_categorical_country(data):
     contingency_table = contingency_table.drop('All', axis=0)
     # take the top 30 countries
     top_countries = contingency_table.head(30).copy()
-    # calculate the sum of relative frequencies for other countries
     other_countries_frequency = contingency_table[30:].sum()
     top_countries.loc['Others'] = other_countries_frequency
     top_countries = top_countries.rename(columns={'0': 'Not Fraud', '1': 'Fraud'})
     top_countries = top_countries.iloc[::-1]
 
     def plot_function():
-        # Create a horizontal stacked bar chart
-        top_countries.plot(kind='barh', stacked=True, figsize=(15, 8), color=['grey', 'coral'])
-        # Set the title with Cramer's V value
-        plt.title(f'Horizontal Stacked Bar Chart of Country and Class\nCramer\'s V: {cramer_v_value:.4f}')
-        # Set x-axis label
-        plt.xlabel('Relative Frequency')
-        # Set y-axis label
-        plt.ylabel('Country')
-        # Show the legend with class meaning 0: Not Fraud, 1: Fraud
-        plt.legend(title='Class', loc='lower right', labels=['Not Fraud', 'Fraud'])
 
+        top_countries.plot(kind='barh', stacked=True, figsize=(15, 8), color=['grey', 'coral'])
+        plt.title(f'Horizontal Stacked Bar Chart of Country and Class\nCramer\'s V: {cramer_v_value:.4f}')
+        plt.xlabel('Relative Frequency')
+        plt.ylabel('Country')
+        plt.legend(title='Class', loc='lower right', labels=['Not Fraud', 'Fraud'])
     # Save the plot as PNG
     save_plot_as_png(plot_function, 'bar_chart_categorical_country')
 
 
 # Box plot between browser and age
-def boxplot_browser_age(data):
+def violin_browser_age(data):
+
     def plot_function():
-        # Set up the figure
+        # violin plot of browser and age
+
         plt.figure(figsize=(12, 8))
-        # Create boxplot
-        sns.boxplot(data=data, x='browser', y='age', hue='class', palette='gray')
-        # Set the title
-        plt.title('Boxplot of Browser and Age')
-        # Set x-axis label
-        plt.xlabel('Browser')
-        # Set y-axis label
-        plt.ylabel('Age')
-        # Show the legent with class meaning 0: Not Fraud, 1: Fraud
-        plt.legend(title='Class', loc='upper right', labels=['Not Fraud', 'Fraud'])
+        custom_palette = ['grey', 'coral']
+        sns.violinplot(data=data, x='browser', y='age', hue='class', split=True, gap=.2, palette=custom_palette, fill=False)
+        plt.title('Relationship between Browser and Age acording to transaction class')
+        plt.xlabel('Browser (type)')
+        plt.ylabel('Age (in years)')
+        plt.legend(title='Class', loc='upper right', handles=[
+            plt.Line2D([], [], color='grey', marker='o', linestyle='None', markersize=10, label='Not Fraud'),
+            plt.Line2D([], [], color='coral', marker='o', linestyle='None', markersize=10, label='Fraud')
+        ])
 
-    save_plot_as_png(plot_function, 'boxplot_browser_age')
+    # Save the plot as PNG
+    save_plot_as_png(plot_function, 'violinplot_browser_age')
 
 
-# Box plot between country and purchase_value
-def boxplot_country_purchase_value(data):
-    # Identify the top 15 countries
-    top_countries = data['country'].value_counts().head(15).index
 
-    # Create a new column 'country_grouped' to categorize countries
-    data['country_grouped'] = np.where(data['country'].isin(top_countries), data['country'], 'Others')
+# Violing plot of 15 countries and purchase value
+def violin_country_purchase_value(data):
 
-    def plot_function():
-        # Set up the figure
-        plt.figure(figsize=(18, 10))
-        # Create boxplot
-        sns.boxplot(data=data, x='country_grouped', y='purchase_value', hue='class', palette='gray')
-        # Set the title
-        plt.title('Boxplot of Country and Purchase Value')
-        # Set x-axis label
-        plt.xlabel('Country')
-        # rotate the x axis labels
+    def function_plot():
+
+        country_transaction_counts = data.groupby('country')['country'].count().sort_values(ascending=False)
+        top_countries = country_transaction_counts.head(15).index.tolist()
+        data['country_grouped'] = data['country'].apply(lambda x: x if x in top_countries else 'Others')
+        data_sorted = data.sort_values(by='country_grouped')
+
+        # Create a violin plot
+        plt.figure(figsize=(18, 8))
+        custom_palette = ['grey', 'coral']
+        sns.violinplot(x='country_grouped', y='purchase_value', hue='class', data=data_sorted, split=True, gap=.2, fill=False,
+                       palette=custom_palette, order=top_countries + ['Others'])
         plt.xticks(rotation=10)
-        # Set y-axis label
-        plt.ylabel('Purchase Value')
-        # Show the legend with class meaning 0: Not Fraud, 1: Fraud
-        plt.legend(title='Class', loc='upper right', labels=['Not Fraud', 'Fraud'])
-
-    # Save the plot
-    save_plot_as_png(plot_function, 'boxplot_country_purchase_value')
-
-
-# Box plot between country and age
-def boxplot_country_age(data):
-    # Identify the top 15 countries
-    top_countries = data['country'].value_counts().head(15).index
-
-    # Create a new column 'country_grouped' to categorize countries
-    data['country_grouped'] = np.where(data['country'].isin(top_countries), data['country'], 'Others')
-
-    def plot_function():
-        # Set up the figure
-        plt.figure(figsize=(18, 10))
-        # Create boxplot
-        sns.boxplot(data=data, x='country_grouped', y='age', hue='class', palette='gray')
-        # Set the title
-        plt.title('Boxplot of Country and Age')
-        # Set x-axis label
+        plt.title('Relationship Purchase Value by Country for Fraud and Not Fraud Transactions')
         plt.xlabel('Country')
-        # rotate the x axis labels
-        plt.xticks(rotation=10)
-        # Set y-axis label
-        plt.ylabel('Age')
-        # Show the legend with class meaning 0: Not Fraud, 1: Fraud
-        plt.legend(title='Class', loc='upper right', labels=['Not Fraud', 'Fraud'])
+        plt.ylabel('Purchase Value (in USD)')
+        plt.legend(title='Transaction Class', handles=[
+                   plt.Line2D([], [], color='grey', marker='o', linestyle='None', markersize=10, label='Not Fraud'),
+                     plt.Line2D([], [], color='coral', marker='o', linestyle='None', markersize=10, label='Fraud')
+                    ], loc='upper right')
 
-    # Save the plot
-    save_plot_as_png(plot_function, 'boxplot_country_age')
+        plt.tight_layout()
+
+
+    # Save the plot as PNG
+    save_plot_as_png(function_plot, 'violinplot_country_purchase_value')
+
+
+
+
+# Violin plot of 15 country and age
+def violin_country_age(data):
+
+        def function_plot():
+            country_transaction_counts = data.groupby('country')['country'].count().sort_values(ascending=False)
+            top_countries = country_transaction_counts.head(15).index.tolist()
+            data['country_grouped'] = data['country'].apply(lambda x: x if x in top_countries else 'Others')
+            data_sorted = data.sort_values(by='country_grouped')
+
+            # Create a violin plot
+            plt.figure(figsize=(18, 8))
+            custom_palette = ['grey', 'coral']
+            sns.violinplot(x='country_grouped', y='age', hue='class', data=data_sorted, split=True, gap=.2, fill=False,
+                        palette=custom_palette, order=top_countries + ['Others'])
+            plt.xticks(rotation=10)
+            plt.title('Relationship Age by Country for Fraud and Not Fraud Transactions')
+            plt.xlabel('Country')
+            plt.ylabel('Age (in years)')
+            plt.legend(title='Transaction Class', handles=[
+                plt.Line2D([], [], color='grey', marker='o', linestyle='None', markersize=10, label='Not Fraud'),
+                plt.Line2D([], [], color='coral', marker='o', linestyle='None', markersize=10, label='Fraud')
+            ], loc='upper right')
+
+            plt.tight_layout()
+
+        # Save the plot as PNG
+        save_plot_as_png(function_plot, 'violinplot_country_age')
 
 
 # Line plot between age and purchase_value with distance correlation segmentation analysis
@@ -592,37 +578,40 @@ def scatter_plot_age_purchase_value(data):
     save_plot_as_png(plot_function, 'scatterplot_age_purchase_value')
 
 
-# count plot between user_id and device_id
+# stripplot between number user_id and device_id
 def number_user_id_per_device_id(data):
+    # Count of fraud user IDs per device
+    fraud_counts = data[data['class'] == 1].groupby('device_id')['user_id'].nunique().reset_index(
+        name='fraud_user_count')
+    # Count of non-fraud user IDs per device
+    not_fraud_counts = data[data['class'] == 0].groupby('device_id')['user_id'].nunique().reset_index(
+        name='not_fraud_user_count')
+    device_counts = pd.merge(fraud_counts, not_fraud_counts, on='device_id', how='outer')
+    # map device_id to numeric values
+    device_counts, device_id_mapping = map_device_id(device_counts)
+    device_counts = device_counts.dropna()
+    # convert to int fraud_user_count and not_fraud_user_count
+    device_counts['fraud_user_count'] = device_counts['fraud_user_count'].astype(int)
+    device_counts['not_fraud_user_count'] = device_counts['not_fraud_user_count'].astype(int)
+
+
     def plot_function():
-        fraud_data = data[data['class'] == 1]
-        fraud_user_device_count = fraud_data.groupby('device_id')['user_id'].nunique().reset_index(
-            name='fraud_user_per_device')
-        not_fraud_data = data[data['class'] == 0]
-        not_fraud_user_device_count = not_fraud_data.groupby('device_id')['user_id'].nunique().reset_index(
-            name='not_fraud_user_per_device')
-        user_device_count = fraud_user_device_count.merge(not_fraud_user_device_count, how='outer', on='device_id')
-
-        # Scatter plot of device_id and
         plt.figure(figsize=(12, 8))
-        plt.scatter(user_device_count['device_id'], user_device_count['not_fraud_user_per_device'], label='Not Fraud',
-                    color='grey', alpha=0.3, marker='o', s=100)
-        plt.scatter(user_device_count['device_id'], user_device_count['fraud_user_per_device'], label='Fraud',
-                    color='coral', marker='x', s=20, alpha=0.3)
-        # Set the title
-        plt.title('Scatter Plot Number of Users per Device ID')
-        # Set x-axis label
-        plt.xlabel('Device ID')
-        # remove labels from x-axis
-        plt.xticks([])
-        # Set y-axis label
-        plt.ylabel('Number of Users')
-        # y axis 1 by 1
-        plt.yticks(np.arange(0, 20, 1))
-        # Show the legend with class meaning 0: Not Fraud, 1: Fraud
-        plt.legend(title='Class', loc='upper right', labels=['Not Fraud', 'Fraud'])
+        sns.pointplot(data=device_counts, x='fraud_user_count', y='device_id_numeric', color='coral', join=False, markers='o', dodge=True, linestyle="none")
+        sns.stripplot(data=device_counts, x='not_fraud_user_count', y='device_id_numeric', color='grey', size=10, alpha=0.5)
+        plt.title('Number of Users per Device ID')
+        plt.xlabel('Number of User IDs')
+        plt.ylabel('Device ID (Mapped to numeric values)')
+        plt.yticks([])
 
-    save_plot_as_png(plot_function, 'lineplot_user_id_device_id')
+        plt.legend(title='Class', loc='upper right', handles=[
+            plt.Line2D([], [], color='grey', marker='o', linestyle='None', markersize=10, label='Not Fraud'),
+            plt.Line2D([], [], color='coral', marker='o', linestyle='None', markersize=10, label= 'Fraud')
+        ])
+
+    save_plot_as_png(plot_function, 'stripplot_device_id_user_id')
+
+
 
 
 # relationship between source and browser
@@ -634,7 +623,6 @@ def source_browser_relationship(data):
         sns.heatmap(contingency_table, annot=True, fmt=".2f", cmap=custom_cmap)
         plt.xlabel('Browser')
         plt.ylabel('Source')
-        # Calculate Cramer's V  value
         cross_tab = pd.crosstab(fraud_data['source'], fraud_data['browser'])
         cramer_v_value = association(cross_tab.values, method='cramer')
         # set the title with Cramer's V value
@@ -648,23 +636,18 @@ def source_country_relationship(data):
     def plot_function():
         fraud_data = data[data['class'] == 1]
         contingency_table = pd.crosstab(fraud_data['country'], fraud_data['source'], margins=True, normalize=True)
-        # sort the contingency table by the total column
         contingency_table = contingency_table.sort_values(by='All', ascending=False)
         contingency_table = contingency_table.drop('All', axis=1)
         contingency_table = contingency_table.drop('All', axis=0)
-        # take the top 30 countries
         top_countries = contingency_table.head(30).copy()
-        # calculate the sum of relative frequencies for other countries
         other_countries_frequency = contingency_table[30:].sum()
         top_countries.loc['Others'] = other_countries_frequency
 
         top_countries = top_countries.iloc[::-1]
 
         top_countries.plot(kind='barh', stacked=True, figsize=(15, 8))
-        # Cramer's V  value
         contingency_table_cramer_v = pd.crosstab(fraud_data['country'], fraud_data['source'])
         cramer_v_value = association(contingency_table_cramer_v.values, method='cramer')
-        # set the title with Cramer's V value
         plt.title(f'Horizontal Stacked Bar Chart of Country and Source\nCramer\'s V: {cramer_v_value:.4f}')
         plt.xlabel('Fraud Relative Frequency')
 
@@ -685,7 +668,6 @@ def browser_device_id_relationship(data):
             fraud_browser_per_device['browser_x'] != fraud_browser_per_device['browser_y']]
 
         plt.figure(figsize=(12, 8))
-        # Create a horizontal stacked bar chart
         sns.countplot(data=different_browsers, x='_merge', hue='browser_x', palette='gray')
         plt.xticks([0, 2], ['Fraud Cases', 'Different Browsers for Fraud and Legitimate'])
 
@@ -704,11 +686,9 @@ def country_browser_relationship(data):
     def plot_function():
         fraud_data = data[data['class'] == 1]
         contingency_table = pd.crosstab(fraud_data['country'], fraud_data['browser'], margins=True, normalize=True)
-        # sort the contingency table by the total column
         contingency_table = contingency_table.sort_values(by='All', ascending=False)
         contingency_table = contingency_table.drop('All', axis=1)
         contingency_table = contingency_table.drop('All', axis=0)
-        # take the top 30 countries
         top_countries = contingency_table.head(30).copy()
         # calculate the sum of relative frequencies for other countries
         other_countries_frequency = contingency_table[30:].sum()
@@ -791,31 +771,23 @@ def lda_analysis(data):
     data['signup_minute'] = data['signup_time'].dt.minute
     data['signup_second'] = data['signup_time'].dt.second
 
-    # count and map device_id
     device_id_map = data['device_id'].value_counts().to_dict()
     data['device_id_count'] = data['device_id'].map(device_id_map)
-    # count and map source
     source_map = data['source'].value_counts().to_dict()
     data['source_count'] = data['source'].map(source_map)
-    # count and map browser
     browser_map = data['browser'].value_counts().to_dict()
     data['browser_count'] = data['browser'].map(browser_map)
-    # count and map sex
     sex_map = data['sex'].value_counts().to_dict()
     data['sex_count'] = data['sex'].map(sex_map)
-    # count and map country
     country_map = data['country'].value_counts().to_dict()
     data['country_count'] = data['country'].map(country_map)
-    # count and map ip_address
+
     ip_address_map = data['ip_address'].value_counts().to_dict()
     data['ip_address_count'] = data['ip_address'].map(ip_address_map)
-
-    # drop unnecessary columns
     data = data.drop(['signup_time', 'purchase_time', 'device_id', 'user_id', 'source', 'browser', 'sex', 'country', 'purchase_year', 'signup_year', 'ip_address'], axis=1)
-    # split the data into features and target
+
     data_features = data.drop('class', axis=1)
     data_label = data['class']
-    # Standardize the data
     scaler = StandardScaler()
     data_scale = scaler.fit_transform(data_features)
     mean_vectors = []
@@ -968,7 +940,26 @@ def dendrogram_clustering(data):
         plt.ylabel('Features')
         plt.xlabel('Distance')
     save_plot_as_png(plot_function, 'dendrogram_features')
+#ip address with the count of user_id
+def ip_address_user_id_count(data):
+    def plot_function():
+        fraud_data = data[data['class'] == 1]
+        non_fraud_data = data[data['class'] == 0]
+        ip_address_user_id_count_fraud = fraud_data.groupby('ip_address')['user_id'].count().reset_index(name='user_id_countf')
+        ip_address_user_id_count_non_fraud = non_fraud_data.groupby('ip_address')['user_id'].count().reset_index(name='user_id_countnf')
+        plt.figure(figsize=(12, 8))
+        sns.stripplot(data=ip_address_user_id_count_fraud, x='user_id_countf', y = 'ip_address', color='coral')
+        sns.stripplot(data=ip_address_user_id_count_non_fraud, x='user_id_countnf', y = 'ip_address', color='grey')
+        plt.title('Relationship between IP Address and User ID')
+        plt.xlabel('User ID Count')
+        plt.ylabel('Ip Address')
+        plt.yticks([])
+        plt.legend(title='Class', loc='upper right', handles=[
+                   plt.Line2D([], [], color='grey', marker='o', linestyle='None', markersize=10, label='Not Fraud'),
+                   plt.Line2D([], [], color='coral', marker='o', linestyle='None', markersize=10, label='Fraud')])
 
+
+    save_plot_as_png(plot_function, 'histogram_ip_address_user_id_count')
 # initialize the python script
 if __name__ == '__main__':
     data = load_efraud_dataset('EFraud_Data_Country.csv')
@@ -985,7 +976,7 @@ if __name__ == '__main__':
     # plot_purchase_weekly(data)
     # plot_purchase_daymonth_features(data)
     # plot_purchase_dateweek_features(data)
-    plot_purchase_datehours_features(data)
+    # plot_purchase_datehours_features(data)
     # Heatmap with cramer's V of categorical source and class
     # cramer_v_categorical_source(data)
     # Heatmap with cramer' V of categorical sex and class
@@ -996,16 +987,13 @@ if __name__ == '__main__':
     # cramer_v_categorical_device_id(data)
     # Horizontal stacked bar chart and cramer's V of categorical country and class
     # cramer_v_categorical_country(data)
-    # Box plot between browser and age
-    # boxplot_browser_age(data)
-    # Box plot between country and purchase_value
-    # boxplot_country_purchase_value(data)
-    # Box plot between country and age
-    # boxplot_country_age(data)
-    # Heatmap between age and purchase_value
+###################### Independent Analysis ################
+    # violin_browser_age(data)
+    # violin_country_purchase_value(data)
+    # violin_country_age(data)
     # scatter_plot_age_purchase_value(data)
     ############ Categorical-Categorical Analysis ################
-    # number_user_id_per_device_id(data)
+    number_user_id_per_device_id(data)
     # source_browser_relationship(data)
     # source_country_relationship(data)
     #browser_device_id_relationship(data)
@@ -1016,4 +1004,5 @@ if __name__ == '__main__':
     #lda_analysis(data)
     #sbs_analysis(data)
     #dendrogram_clustering(data)
+    # ip_address_user_id_count(data)
 
