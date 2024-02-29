@@ -161,6 +161,7 @@ def feature_creation_user_per_country(data):
 def log_transformation(data):
     data['purchase_value'] = np.log(data['purchase_value'] + 1)
     data['age'] = np.log(data['age'])
+    data['number_user_per_device'] = np.log(data['number_user_per_device'])
     return data
 # one hot encoding for source, browser, sex
 def one_hot_encoding(data):
@@ -213,6 +214,22 @@ def drop_features(data):
     columns = ['signup_count_PerDevice', 'number_users_perIP', 'signup_week']
     data = data.drop(columns, axis=1)
     return data
+# fraud rate per country and device id
+def feature_creation_fraud_score(data):
+    data['fraud_score_country'] = data.groupby('country')['class'].transform('mean')
+    data['fraud_score_device'] = data.groupby('device_id')['class'].transform('mean')
+    return data
+# fisher score for feature selection
+def fisher_score(data):
+    X = data.drop('class', axis=1)
+    y = data['class']
+    fisher_score = (X.mean() - X[y == 1].mean()) ** 2 / (X.var() + X[y == 1].var())
+    fisher_score = fisher_score.sort_values(ascending=False)
+    return fisher_score
+
+
+
+
 
 if __name__ == '__main__':
     data = read_data('EFraud_Data_Country.csv')
@@ -228,15 +245,25 @@ if __name__ == '__main__':
     data = feature_extraction_purchase_time(data)
     data = feature_creation_user_per_device(data)
     data = feature_creation_user_per_country(data)
+    data = feature_creation_fraud_score(data)
+############ Data Preprocessing ################
     data = log_transformation(data)
     data = one_hot_encoding(data)
-    data = binary_encoding(data)
+    # data = binary_encoding(data)
     data = drop_columns(data)
-    #heatmap(data)
-    # feature_importance(data)
     data = drop_features(data)
-    feature_importance(data)
-    # data.to_csv('EFraud_Data_Country_Processed.csv', index=False)
+############ Feature Selection ################
+    # feature_importance(data)
+    # fisher_score(data)
+    # heatmap(data)
+    # save in the data folder
+    data.to_csv('data/EFraud_Data_Country_Processed.csv', index=False)
+
+
+
+
+
+
 
 
 
