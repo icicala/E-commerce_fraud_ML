@@ -8,6 +8,10 @@ from imblearn.over_sampling import SMOTE, ADASYN
 from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score
 from sklearn.ensemble import RandomForestClassifier
 from catboost import CatBoostClassifier
+import seaborn as sns
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense, Dropout
 def read_data():
     data = pd.read_csv('data/EFraud_Data_Country_Processed.csv')
     return data
@@ -39,10 +43,10 @@ def feature_scaling(X_train, X_test):
     X_test = sc.transform(X_test)
     return X_train, X_test
 # tree visualization Random Forest Classifier
-def tree_visualization(estimator, columns):
-    plt.figure(figsize=(15, 20))
-    tree.plot_tree(estimator, filled=True, feature_names=columns, class_names=['1', '0'], rounded=True)
-    plt.show()
+# def tree_visualization(estimator, columns):
+#     plt.figure(figsize=(15, 20))
+#     tree.plot_tree(estimator, filled=True, feature_names=columns, class_names=['1', '0'], rounded=True)
+#     plt.show()
 # evaluate model
 def evaluate_model(y_test, y_pred):
     cm = confusion_matrix(y_test, y_pred)
@@ -60,7 +64,6 @@ def evaluate_model(y_test, y_pred):
 if __name__ == '__main__':
     data = read_data()
     X_train, X_test, y_train, y_test = partition_data(data)
-    X_train, X_test = feature_scaling(X_train, X_test)
 ################## Imbalance Algorithm ##################
     X_train, y_train = smote(X_train, y_train)
     # X_train, y_train = adasyn(X_train, y_train)
@@ -74,10 +77,56 @@ if __name__ == '__main__':
     # y_pred = classifier.predict(X_test)
     # evaluate_model(y_test, y_pred)
 ################## CatBoost Classifier ##################
-    classifier = CatBoostClassifier(iterations=500, depth=10, learning_rate=0.01, loss_function='Logloss', random_seed=47)
-    classifier.fit(X_train, y_train)
-    y_pred = classifier.predict(X_test)
-    evaluate_model(y_test, y_pred)
+    # classifier = CatBoostClassifier(iterations=10, depth=10, learning_rate=0.01, loss_function='Logloss', random_seed=47, l2_leaf_reg = 3)
+    # classifier.fit(X_train, y_train)
+    # y_pred = classifier.predict(X_test)
+    # evaluate_model(y_test, y_pred)
+################ Long Short Term Memory ################
+    X_train = X_train.reshape((X_train.shape[0], 1, X_train.shape[1]))
+    X_test = X_test.reshape((X_test.shape[0], 1, X_test.shape[1]))
+    modellstm = Sequential()
+    modellstm.add(LSTM(100, input_shape=(X_train.shape[1], X_train.shape[2])))
+    modellstm.add(Dropout(0.2))
+    modellstm.add(Dense(1, activation='sigmoid'))
+    modellstm.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+    history = modellstm.fit(X_train, y_train, epochs=10, batch_size=70, validation_data=(X_test, y_test), verbose=2, shuffle=False)
+    # test_loss, test_acc = model.evaluate(X_test, y_test, verbose=2)
+    # print(f'Test Loss: {test_loss}, Test Accuracy: {test_acc}')
+    from tensorflow.keras.utils import plot_model
+    plot_model(modellstm, to_file='model.png', show_shapes=True, show_layer_names=True)
+
+
+################## Multilayer Perceptron ##################
+    # model = Sequential()
+    # model.add(Dense(64, input_dim=21, activation='relu'))
+    # model.add(Dropout(0.5))
+    # model.add(Dense(32, activation='relu'))
+    # model.add(Dropout(0.5))
+    # model.add(Dense(1, activation='sigmoid'))
+    # model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+    # history = model.fit(X_train, y_train, epochs=10, batch_size=70, validation_data=(X_test, y_test), verbose=2, shuffle=False)
+    # test_loss, test_acc = model.evaluate(X_test, y_test, verbose=2)
+    # print(f'Test Loss: {test_loss}, Test Accuracy: {test_acc}')
+################## Autoencoder for label data ##################
+    # define encoder
+    # input_dim = X_train.shape[1]
+    # input_layer = tf.keras.layers.Input(shape=(input_dim,))
+    # encoder = tf.keras.layers.Dense(14, activation='relu')(input_layer)
+    # encoder = tf.keras.layers.Dense(7, activation='relu')(encoder)
+    # decoder = tf.keras.layers.Dense(14, activation='relu')(encoder)
+    # decoder = tf.keras.layers.Dense(input_dim, activation='sigmoid')(decoder)
+    # autoencoder = tf.keras.Model(inputs=input_layer, outputs=decoder)
+    # autoencoder.compile(optimizer='adam', loss='binary_crossentropy')
+    # autoencoder.summary()
+    # history = autoencoder.fit(X_train, X_train, epochs=10, batch_size=70, validation_data=(X_test, X_test), verbose=2, shuffle=False)
+
+
+
+
+
+
+
+
 
 
 
