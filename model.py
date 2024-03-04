@@ -5,7 +5,8 @@ from sklearn import tree
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE, ADASYN
-from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score, \
+    classification_report, log_loss
 from sklearn.ensemble import RandomForestClassifier
 from catboost import CatBoostClassifier
 import seaborn as sns
@@ -47,19 +48,31 @@ def feature_scaling(X_train, X_test):
 #     plt.figure(figsize=(15, 20))
 #     tree.plot_tree(estimator, filled=True, feature_names=columns, class_names=['1', '0'], rounded=True)
 #     plt.show()
+def heatmap(y_test, y_pred):
+    # Plot the confusion matrix
+    cm = confusion_matrix(y_test, y_pred)
+    sns.heatmap(cm, annot=True, fmt='d', cmap='coolwarm_r')
+    plt.title('Confusion Matrix for LSTM Model')
+    plt.xlabel('Predicted Category')
+    plt.ylabel('Actual Category')
+    plt.xticks([0.5, 1.5], ['Legit', 'Fraud'])
+    plt.yticks([0.5, 1.5], ['Legit', 'Fraud'], rotation=0)
+    plt.show()
 # evaluate model
-def evaluate_model(y_test, y_pred):
+def evaluate_model(y_test, y_pred, y_pred_probs):
     cm = confusion_matrix(y_test, y_pred)
     accuracy = accuracy_score(y_test, y_pred)
     precision = precision_score(y_test, y_pred)
     recall = recall_score(y_test, y_pred)
     f1 = f1_score(y_test, y_pred)
-    # print results
+    logloss = log_loss(y_test, y_pred_probs)
     print('Confusion Matrix: ', cm)
     print('Accuracy: ', accuracy)
     print('Precision: ', precision)
     print('Recall: ', recall)
     print('F1 Score: ', f1)
+    print('Log Loss: ', logloss)
+
 
 if __name__ == '__main__':
     data = read_data()
@@ -71,29 +84,35 @@ if __name__ == '__main__':
 ################## Feature Scaling ##################
     X_train, X_test = feature_scaling(X_train, X_test)
 ################## Random Forest Classifier ##################
-    # # class_weight='balanced',
+    # class_weight='balanced',
     # classifier = RandomForestClassifier(n_estimators=500, random_state=47, criterion='entropy', n_jobs=-1)
     # classifier.fit(X_train, y_train)
     # y_pred = classifier.predict(X_test)
-    # evaluate_model(y_test, y_pred)
+    # y_pred_probs = classifier.predict_proba(X_test)
+    # evaluate_model(y_test, y_pred, y_pred_probs)
 ################## CatBoost Classifier ##################
-    # classifier = CatBoostClassifier(iterations=10, depth=10, learning_rate=0.01, loss_function='Logloss', random_seed=47, l2_leaf_reg = 3)
+    # classifier = CatBoostClassifier(iterations=500, depth=15, learning_rate=0.01, loss_function='Logloss', random_seed=47, l2_leaf_reg = 3)
     # classifier.fit(X_train, y_train)
     # y_pred = classifier.predict(X_test)
-    # evaluate_model(y_test, y_pred)
+    # y_pred_probs = classifier.predict_proba(X_test)
+    # # evaluate_model(y_test, y_pred, y_pred_probs)
+
 ################ Long Short Term Memory ################
     X_train = X_train.reshape((X_train.shape[0], 1, X_train.shape[1]))
     X_test = X_test.reshape((X_test.shape[0], 1, X_test.shape[1]))
     modellstm = Sequential()
-    modellstm.add(LSTM(100, input_shape=(X_train.shape[1], X_train.shape[2])))
+    modellstm.add(LSTM(200, input_shape=(X_train.shape[1], X_train.shape[2])))
     modellstm.add(Dropout(0.2))
     modellstm.add(Dense(1, activation='sigmoid'))
     modellstm.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
-    history = modellstm.fit(X_train, y_train, epochs=10, batch_size=70, validation_data=(X_test, y_test), verbose=2, shuffle=False)
+    history = modellstm.fit(X_train, y_train, epochs=50, batch_size=70, validation_data=(X_test, y_test), verbose=2, shuffle=False)
     # test_loss, test_acc = model.evaluate(X_test, y_test, verbose=2)
     # print(f'Test Loss: {test_loss}, Test Accuracy: {test_acc}')
-    from tensorflow.keras.utils import plot_model
-    plot_model(modellstm, to_file='model.png', show_shapes=True, show_layer_names=True)
+    y_pred_probs = modellstm.predict(X_test)
+    y_pred = (y_pred_probs > 0.5).astype(int)
+    evaluate_model(y_test, y_pred, y_pred_probs)
+
+
 
 
 ################## Multilayer Perceptron ##################
