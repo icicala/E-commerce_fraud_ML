@@ -17,5 +17,5 @@ jobs:
         run: |
           # Post reports as comments in GitHub PRs
           cat report.txt >> report.md
-          echo "![](./purchase_value_histogram.png)" >> report.md
+          echo "![](./plots/purchase_value_histogram.png)" >> report.md
           cml comment create report.md
