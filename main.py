@@ -257,7 +257,7 @@ if __name__ == '__main__':
     # fisher_score(data)
     # heatmap(data)
     # save in the data folder
-    data.to_csv('data/EFraud_Data_Country_Processed.csv', index=False)
+    # data.to_csv('data/EFraud_Data_Country_Processed.csv', index=False)
 
 
 
