@@ -227,10 +227,6 @@ def fisher_score(data):
     fisher_score = fisher_score.sort_values(ascending=False)
     return fisher_score
 
-
-
-
-
 if __name__ == '__main__':
     data = read_data('EFraud_Data_Country.csv')
     #dublicates_values(data)
