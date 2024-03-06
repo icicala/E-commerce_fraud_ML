@@ -7,7 +7,6 @@ from intervaltree import IntervalTree
 
 # read data_fraud from csv file
 def read_data_fraud(filename):
-    # Get the path of the file
     filename = os.path.join(os.path.dirname(__file__), 'data', filename)
     data = pd.read_csv(filename, parse_dates=['signup_time', 'purchase_time'],
                        converters={'ip_address': lambda x: preprocess_ip_to_int(x)})

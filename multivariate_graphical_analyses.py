@@ -36,13 +36,9 @@ from SBS import SBS
 
 # Function to save plots as PNG files
 def save_plot_as_png(plot_function, plot_name):
-    # save to folder 'plots'
     os.makedirs('plots', exist_ok=True)
-    # Plotting
     plot_function()
-    # Save plot as PNG file
     plt.savefig(os.path.join('plots', plot_name + '.png'))
-    # Clear plot
     plt.clf()
 
 
@@ -54,9 +50,7 @@ def load_efraud_dataset(filename):
 
 # Pandas data profiling report
 def data_profiling_report(data):
-    # Create a pandas profiling report
     profile = ProfileReport(data, title='Pandas Profiling Report', explorative=True)
-    # Save the report as HTML file
     profile.to_file(os.path.join('reports', 'pandas_profiling_report.html'))
 
 
@@ -162,7 +156,6 @@ def relationship_between_datetime_features_and_label(data):
 # lineplot of signup time weekly and class
 def plot_sign_up_weekly(data):
     def plot_function():
-        # Create a new column 'signup_day_of_week' to categorize the day of the week
         data['signup_week'] = data['signup_time'].dt.isocalendar().week
         weekly_data = data.groupby(['signup_week', 'class']).size().unstack(fill_value=0)
         weekly_data_relative = weekly_data.divide(weekly_data.sum(axis=0).sum(), axis=0)
@@ -171,7 +164,6 @@ def plot_sign_up_weekly(data):
         sns.lineplot(data=weekly_data_relative, marker='o', palette=custom_palette, dashes=False, markersize=10, linewidth=2)
         plt.title('Relationship between Signup Time and Class per Week')
         plt.xlabel('Week')
-        # x-axis from 1 to 52
         plt.xticks(ticks=range(1, 35))
         plt.ylabel('Relative Frequency')
         plt.legend(title='Class', loc='upper right', handles=[
@@ -195,7 +187,6 @@ def plot_sign_up_daymonth_features(data):
         plt.title('Relationship between Signup Time and Class per Day of the Month')
         plt.xlabel('Day of the Month')
         plt.ylabel('Relative Frequency')
-        # x-axis from 1 to 31
         plt.xticks(ticks=range(1, 32))
         plt.legend(title='Class', loc='upper right', handles=[
             plt.Line2D([], [], color='grey', marker='o', linestyle='None', markersize=10, label='Not Fraud'),
@@ -208,7 +199,6 @@ def plot_sign_up_daymonth_features(data):
 # Line plot of signup day of the week and class
 def plot_sign_up_dateweek_features(data):
     def plot_signup_day():
-        # filter fraud transactions
         fraud_data = data[data['class'] == 1].copy()
         fraud_data['signup_day_of_week'] = fraud_data['signup_time'].dt.dayofweek
         daily_data = fraud_data.groupby(['signup_day_of_week', 'class']).size().unstack(fill_value=0)
@@ -219,7 +209,6 @@ def plot_sign_up_dateweek_features(data):
         plt.title('Relationship between Signup Time and Fraud transactions per Day')
         plt.xlabel('Day of the Week')
         plt.ylabel('Fraud Relative Frequency')
-        # remove legend
         plt.legend().remove()
         plt.xticks(ticks=range(0, 7), labels=['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'])
         plt.grid(True)
@@ -228,7 +217,6 @@ def plot_sign_up_dateweek_features(data):
 # line plot of signup time hour of the day and class
 def plot_sign_up_datehours_features(data):
     def plot_signup_hour():
-        # filter fraud transactions
         fraud_data = data[data['class'] == 1].copy()
         fraud_data['signup_hour'] = fraud_data['signup_time'].dt.hour
         hourly_data = fraud_data.groupby(['signup_hour', 'class']).size().unstack(fill_value=0)
@@ -239,21 +227,14 @@ def plot_sign_up_datehours_features(data):
         plt.title('Relationship between Signup Time and Fraud transactions per Hour')
         plt.xlabel('Hour of the Day')
         plt.ylabel('Fraud Relative Frequency')
-        # remove legend
         plt.legend().remove()
         plt.xticks(ticks=range(0, 24))
         plt.grid(True)
-
     save_plot_as_png(plot_signup_hour, 'lineplot_signup_hour')
-
-# kde plot hours of the day(signup_time) and class
-
-
 
 # line plot of purchase time week of the year and class
 def plot_purchase_weekly(data):
     def function_plot():
-        # Create a new column 'purchase_week' to categorize the week of the year
         data['purchase_week'] = data['purchase_time'].dt.isocalendar().week
         weekly_data = data.groupby(['purchase_week', 'class']).size().unstack(fill_value=0)
         weekly_data_relative = weekly_data.divide(weekly_data.sum(axis=0).sum(), axis=0)
@@ -275,7 +256,6 @@ def plot_purchase_weekly(data):
 # line plot of purchase time day of the month and class
 def plot_purchase_daymonth_features(data):
     def plot_purchase_day():
-        # day of the month
         data['purchase_day'] = data['purchase_time'].dt.day
         daily_data = data.groupby(['purchase_day', 'class']).size().unstack(fill_value=0)
         daily_data_relative = daily_data.divide(daily_data.sum(axis=0).sum(), axis=0)
@@ -298,8 +278,6 @@ def plot_purchase_daymonth_features(data):
 # line plot of purchase time day of the week and class
 def plot_purchase_dateweek_features(data):
     def plot_purchase_day():
-        # filter fraud transactions
-
         data['purchase_day_of_week'] = data['purchase_time'].dt.dayofweek
         daily_data = data.groupby(['purchase_day_of_week', 'class']).size().unstack(fill_value=0)
         daily_data_relative = daily_data.divide(daily_data.sum(axis=0).sum(), axis=0)
@@ -321,7 +299,6 @@ def plot_purchase_dateweek_features(data):
 # line plot of purchase time hour of the day and class
 def plot_purchase_datehours_features(data):
     def plot_purchase_hour():
-        # filter fraud transactions
         fraud_data = data[data['class'] == 1].copy()
         fraud_data['purchase_hour'] = fraud_data['purchase_time'].dt.hour
         hourly_data = fraud_data.groupby(['purchase_hour', 'class']).size().unstack(fill_value=0)
@@ -335,14 +312,11 @@ def plot_purchase_datehours_features(data):
         plt.xticks(ticks=range(0, 24))
         plt.grid(True)
         plt.legend().remove()
-
     save_plot_as_png(plot_purchase_hour, 'lineplot_purchase_hour')
 # Heatmap with relative frequncy and total, cramer's V of categorical source and class
 def cramer_v_categorical_source(data):
     def plot_function():
-        # create contingency table for source and class columns with relative frequency and total
         contingency_table = pd.crosstab(data['source'], data['class'], normalize=True, margins=True)
-
         custom_palette = sns.diverging_palette(220, 20, as_cmap=True)
         sns.heatmap(contingency_table, annot=True, fmt=".2f", cmap=custom_palette)
         plt.xlabel('Class')
@@ -350,17 +324,13 @@ def cramer_v_categorical_source(data):
         plt.xticks([0.5, 1.5, 2.5], ['Not Fraud', 'Fraud', 'All'], rotation=0)
         cross_tab = pd.crosstab(data['source'], data['class'])
         cramer_v_value = association(cross_tab.values, method='cramer')
-
         plt.title(f'Heatmap of Source and Class\nCramer\'s V: {cramer_v_value:.4f}')
-
-    # Save the plot as PNG
     save_plot_as_png(plot_function, 'heatmap_categorical_source')
 
 
 # Heatmap with relative frequncy and total, cramer's V of categorical sex and class column
 def cramer_v_categorical_sex(data):
     def plot_function():
-        # create contingency table for sex and class columns with relative frequency and total
         contingency_table = pd.crosstab(data['sex'], data['class'], normalize=True, margins=True)
         custom_palette = sns.diverging_palette(220, 20, as_cmap=True)
         sns.heatmap(contingency_table, annot=True, fmt=".2f", cmap=custom_palette)
@@ -369,19 +339,14 @@ def cramer_v_categorical_sex(data):
         plt.xticks([0.5, 1.5, 2.5], ['Not Fraud', 'Fraud', 'All'], rotation=0)
         cross_tab = pd.crosstab(data['sex'], data['class'])
         cramer_v_value = association(cross_tab.values, method='cramer')
-
         plt.title(f'Heatmap of Sex and Class\nCramer\'s V: {cramer_v_value:.4f}')
-
-    # Save the plot as PNG
     save_plot_as_png(plot_function, 'heatmap_categorical_sex')
 
 
 # Heatmap with relative frequncy and total, cramer's V of categorical browser and class column
 def cramer_v_categorical_browser(data):
     def plot_function():
-
         contingency_table = pd.crosstab(data['browser'], data['class'], normalize=True, margins=True)
-
         custom_palette = sns.diverging_palette(220, 20, as_cmap=True)
         sns.heatmap(contingency_table, annot=True, fmt=".3f", cmap=custom_palette)
         plt.xlabel('Class')
@@ -390,7 +355,6 @@ def cramer_v_categorical_browser(data):
         cross_tab = pd.crosstab(data['browser'], data['class'])
         cramer_v_value = association(cross_tab.values, method='cramer')
         plt.title(f'Heatmap of Browser and Class\nCramer\'s V: {cramer_v_value:.4f}')
-    # Save the plot as PNG
     save_plot_as_png(plot_function, 'heatmap_categorical_browser')
 
 
@@ -405,36 +369,28 @@ def map_device_id(data):
 # Function to perform Cramer's V analysis on device_id and class
 def cramer_v_categorical_device_id(data):
     def plot_function():
-        # Map device_id to numeric values
         data_mapped, device_id_mapping = map_device_id(data.copy())
-
         contingency_table = pd.crosstab(data_mapped['device_id'], data_mapped['class'])
-        # Calculate Cramer's V
         cramer_v_value = association(contingency_table.values, method='cramer')
         plt.figure(figsize=(12, 8))
         custom_palette = ['grey', 'coral']
         sns.histplot(data=data_mapped, x='device_id_numeric', hue='class', stat='probability', bins=30, kde=True,
                      multiple='stack', palette=custom_palette)
-        # Set the title with Cramer's V value
         plt.title(f'Histogram of Device ID(Mapped) and Class\nCramer\'s V: {cramer_v_value:.4f}')
         plt.xlabel('Mapped Device ID to numeric values')
         plt.ylabel('Relative Frequency')
         plt.legend(title='Class', loc='upper right', labels=['Fraud', 'Not Fraud'])
-
     save_plot_as_png(plot_function, 'histogram_categorical_device_id')
 
 
 #  Horizontal stacked bar chart and cramer's V of categorical country and class column
 def cramer_v_categorical_country(data):
-    # Calculate Cramer's V
     contingency_cramer_v = pd.crosstab(data['country'], data['class'])
     cramer_v_value = association(contingency_cramer_v.values, method='cramer')
-    # create contingency table for country and class columns relative frequency
     contingency_table = pd.crosstab(data['country'], data['class'], normalize=True, margins=True)
     contingency_table = contingency_table.sort_values(by='All', ascending=False)
     contingency_table = contingency_table.drop('All', axis=1)
     contingency_table = contingency_table.drop('All', axis=0)
-    # take the top 30 countries
     top_countries = contingency_table.head(30).copy()
     other_countries_frequency = contingency_table[30:].sum()
     top_countries.loc['Others'] = other_countries_frequency
@@ -442,13 +398,11 @@ def cramer_v_categorical_country(data):
     top_countries = top_countries.iloc[::-1]
 
     def plot_function():
-
         top_countries.plot(kind='barh', stacked=True, figsize=(15, 8), color=['grey', 'coral'])
         plt.title(f'Horizontal Stacked Bar Chart of Country and Class\nCramer\'s V: {cramer_v_value:.4f}')
         plt.xlabel('Relative Frequency')
         plt.ylabel('Country')
         plt.legend(title='Class', loc='lower right', labels=['Not Fraud', 'Fraud'])
-    # Save the plot as PNG
     save_plot_as_png(plot_function, 'bar_chart_categorical_country')
 
 
@@ -456,8 +410,6 @@ def cramer_v_categorical_country(data):
 def violin_browser_age(data):
 
     def plot_function():
-        # violin plot of browser and age
-
         plt.figure(figsize=(12, 8))
         custom_palette = ['grey', 'coral']
         sns.violinplot(data=data, x='browser', y='age', hue='class', split=True, gap=.2, palette=custom_palette, fill=False)
@@ -468,8 +420,6 @@ def violin_browser_age(data):
             plt.Line2D([], [], color='grey', marker='o', linestyle='None', markersize=10, label='Not Fraud'),
             plt.Line2D([], [], color='coral', marker='o', linestyle='None', markersize=10, label='Fraud')
         ])
-
-    # Save the plot as PNG
     save_plot_as_png(plot_function, 'violinplot_browser_age')
 
 
@@ -478,13 +428,10 @@ def violin_browser_age(data):
 def violin_country_purchase_value(data):
 
     def function_plot():
-
         country_transaction_counts = data.groupby('country')['country'].count().sort_values(ascending=False)
         top_countries = country_transaction_counts.head(15).index.tolist()
         data['country_grouped'] = data['country'].apply(lambda x: x if x in top_countries else 'Others')
         data_sorted = data.sort_values(by='country_grouped')
-
-        # Create a violin plot
         plt.figure(figsize=(18, 8))
         custom_palette = ['grey', 'coral']
         sns.violinplot(x='country_grouped', y='purchase_value', hue='class', data=data_sorted, split=True, gap=.2, fill=False,
@@ -499,9 +446,6 @@ def violin_country_purchase_value(data):
                     ], loc='upper right')
 
         plt.tight_layout()
-
-
-    # Save the plot as PNG
     save_plot_as_png(function_plot, 'violinplot_country_purchase_value')
 
 
@@ -515,8 +459,6 @@ def violin_country_age(data):
             top_countries = country_transaction_counts.head(15).index.tolist()
             data['country_grouped'] = data['country'].apply(lambda x: x if x in top_countries else 'Others')
             data_sorted = data.sort_values(by='country_grouped')
-
-            # Create a violin plot
             plt.figure(figsize=(18, 8))
             custom_palette = ['grey', 'coral']
             sns.violinplot(x='country_grouped', y='age', hue='class', data=data_sorted, split=True, gap=.2, fill=False,
@@ -529,38 +471,25 @@ def violin_country_age(data):
                 plt.Line2D([], [], color='grey', marker='o', linestyle='None', markersize=10, label='Not Fraud'),
                 plt.Line2D([], [], color='coral', marker='o', linestyle='None', markersize=10, label='Fraud')
             ], loc='upper right')
-
             plt.tight_layout()
-
-        # Save the plot as PNG
         save_plot_as_png(function_plot, 'violinplot_country_age')
 
 
 # Line plot between age and purchase_value with distance correlation segmentation analysis
 def scatter_plot_age_purchase_value(data):
     def plot_function():
-        # Calculate the average purchase value for each age group and class
         average_purchase_by_age_group_class = data.groupby(['age', 'class'], observed=True)[
             'purchase_value'].mean().unstack()
         print(average_purchase_by_age_group_class)
-        # Set up the figure
         plt.figure(figsize=(12, 8))
-        # custom palette
         custom_palette = ['grey', 'coral']
-        # Create line plot
-        # Create line plot
         sns.lineplot(data=average_purchase_by_age_group_class, marker='o', palette=custom_palette, dashes=False,
                      markersize=10, linewidth=2)
 
-        # Set x-axis label
         plt.xlabel('Age')
-        # Set y-axis label
-        # set x axis every 2 years
         plt.xticks(np.arange(data['age'].min(), data['age'].max(), 2))
-        # set y axis every 5
         plt.yticks(np.arange(0, 70, 5))
         plt.ylabel('Average Purchase Value')
-        # Show the legend with class meaning 0: Not Fraud, 1: Fraud using dictionary
         plt.legend(title='Class', handles=[
             plt.Line2D([], [], color='grey', marker='o', linestyle='None', markersize=10, label='Not Fraud'),
             plt.Line2D([], [], color='coral', marker='o', linestyle='None', markersize=10, label='Fraud')
@@ -573,24 +502,18 @@ def scatter_plot_age_purchase_value(data):
                                                                    not_fraud_data['purchase_value'].astype(float))
         plt.title(
             f'Line Plot of Age and Average Purchase Value\nDistance Correlation(Fraud): {distance_correlation:.4f}\nDistance Correlation(Not Fraud): {distance_correlation_not_fraud:.4f}')
-
-    # Save the plot
     save_plot_as_png(plot_function, 'scatterplot_age_purchase_value')
 
 
 # stripplot between number user_id and device_id
 def number_user_id_per_device_id(data):
-    # Count of fraud user IDs per device
     fraud_counts = data[data['class'] == 1].groupby('device_id')['user_id'].nunique().reset_index(
         name='fraud_user_count')
-    # Count of non-fraud user IDs per device
     not_fraud_counts = data[data['class'] == 0].groupby('device_id')['user_id'].nunique().reset_index(
         name='not_fraud_user_count')
     device_counts = pd.merge(fraud_counts, not_fraud_counts, on='device_id', how='outer')
-    # map device_id to numeric values
     device_counts, device_id_mapping = map_device_id(device_counts)
     device_counts = device_counts.dropna()
-    # convert to int fraud_user_count and not_fraud_user_count
     device_counts['fraud_user_count'] = device_counts['fraud_user_count'].astype(int)
     device_counts['not_fraud_user_count'] = device_counts['not_fraud_user_count'].astype(int)
 
@@ -611,9 +534,6 @@ def number_user_id_per_device_id(data):
 
     save_plot_as_png(plot_function, 'stripplot_device_id_user_id')
 
-
-
-
 # relationship between source and browser
 def source_browser_relationship(data):
     def plot_function():
@@ -625,7 +545,6 @@ def source_browser_relationship(data):
         plt.ylabel('Source')
         cross_tab = pd.crosstab(fraud_data['source'], fraud_data['browser'])
         cramer_v_value = association(cross_tab.values, method='cramer')
-        # set the title with Cramer's V value
         plt.title(f'Heatmap of Source and Browser\nCramer\'s V: {cramer_v_value:.4f}')
 
     save_plot_as_png(plot_function, 'heatmap_source_browser')
@@ -642,15 +561,12 @@ def source_country_relationship(data):
         top_countries = contingency_table.head(30).copy()
         other_countries_frequency = contingency_table[30:].sum()
         top_countries.loc['Others'] = other_countries_frequency
-
         top_countries = top_countries.iloc[::-1]
-
         top_countries.plot(kind='barh', stacked=True, figsize=(15, 8))
         contingency_table_cramer_v = pd.crosstab(fraud_data['country'], fraud_data['source'])
         cramer_v_value = association(contingency_table_cramer_v.values, method='cramer')
         plt.title(f'Horizontal Stacked Bar Chart of Country and Source\nCramer\'s V: {cramer_v_value:.4f}')
         plt.xlabel('Fraud Relative Frequency')
-
     save_plot_as_png(plot_function, 'bar_chart_country_source')
 
 
@@ -658,10 +574,8 @@ def source_country_relationship(data):
 def browser_device_id_relationship(data):
     def plot_function():
         ddata = data[['device_id', 'browser', 'class']].copy()
-        # find which browser are in fraud and not are in not fraud
         fraud_data = ddata[ddata['class'] == 1]
         not_fraud_data = ddata[ddata['class'] == 0]
-        # merge the fraud with not fraud data on device id and browser leaving only device id and browser that are fraud
         fraud_browser_per_device = fraud_data.merge(not_fraud_data, how='left', on=['device_id'],
                                                     indicator=True)
         different_browsers = fraud_browser_per_device[
@@ -670,16 +584,12 @@ def browser_device_id_relationship(data):
         plt.figure(figsize=(12, 8))
         sns.countplot(data=different_browsers, x='_merge', hue='browser_x', palette='gray')
         plt.xticks([0, 2], ['Fraud Cases', 'Different Browsers for Fraud and Legitimate'])
-
-        # Cramer V  value
         fraud_ddata = ddata[ddata['class'] == 1]
         contingency_table_cramer_v = pd.crosstab(fraud_ddata['browser'], fraud_data['device_id'])
         cramer_v_value = association(contingency_table_cramer_v.values, method='cramer')
-
         plt.ylabel('Number of Devices')
         plt.xlabel("Browser in Fraud and Legitimate transactions")
         plt.title(f'Count Plot of Browser and Device ID\nCramer\'s V: {cramer_v_value:.2f}')
-
     save_plot_as_png(plot_function, 'heatmap_browser_device_id')
 # relationship between country and browser
 def country_browser_relationship(data):
@@ -690,24 +600,19 @@ def country_browser_relationship(data):
         contingency_table = contingency_table.drop('All', axis=1)
         contingency_table = contingency_table.drop('All', axis=0)
         top_countries = contingency_table.head(30).copy()
-        # calculate the sum of relative frequencies for other countries
         other_countries_frequency = contingency_table[30:].sum()
         top_countries.loc['Others'] = other_countries_frequency
         top_countries = top_countries.iloc[::-1]
         top_countries.plot(kind='barh', stacked=True, figsize=(15, 8))
-        # Cramer's V  value
         contingency_table_cramer_v = pd.crosstab(fraud_data['country'], fraud_data['browser'])
         cramer_v_value = association(contingency_table_cramer_v.values, method='cramer')
-        # set the title with Cramer's V value
         plt.title(f'Horizontal Stacked Bar Chart of Country and Browser\nCramer\'s V: {cramer_v_value:.4f}')
         plt.xlabel('Fraud Relative Frequency')
-
     save_plot_as_png(plot_function, 'heatmap_country_browser')
 
 # relationship between signup time and purchase time
 def signup_purchase_time_relationship(data):
     def plot_function():
-
         data['time_difference'] = (data['purchase_time'] - data['signup_time'])
         data['time_difference_sec'] = data['time_difference'].dt.total_seconds()
         plt.figure(figsize=(12, 8))
@@ -718,7 +623,6 @@ def signup_purchase_time_relationship(data):
         plt.xticks([0, 1], ['Not Fraud', 'Fraud'])
         plt.ylabel('Time Difference in Seconds')
         plt.legend().remove()
-
     save_plot_as_png(plot_function, 'boxplot_difference_time_seconds')
 # Purchase value and Purchase time relationship per hour
 def purchase_value_purchase_time_relationship(data):
@@ -736,7 +640,6 @@ def purchase_value_purchase_time_relationship(data):
             plt.Line2D([], [], color='grey', marker='o', linestyle='None', markersize=10, label='Not Fraud'),
             plt.Line2D([], [], color='coral', marker='o', linestyle='None', markersize=10, label='Fraud')
         ], loc='upper right')
-
     save_plot_as_png(plot_function, 'scatterplot_purchase_value_purchase_time_hour')
 # relationship between signup time and device_id
 def signup_device_id_relationship(data):
@@ -751,7 +654,6 @@ def signup_device_id_relationship(data):
         sns.despine()
         plt.yticks(np.arange(0, 20, 1))
         plt.xticks([0, 1], ['Not Fraud', 'Fraud'])
-
     save_plot_as_png(plot_function, 'stripplot_device_id_class')
 
 # Linear Discrimant Analysis
@@ -792,16 +694,14 @@ def lda_analysis(data):
     scaler = StandardScaler()
     data_scale = scaler.fit_transform(data_features)
     mean_vectors = []
-    # for each class calculate the mean vector
     for cl in range(0, 2):
         mean_vectors.append(np.mean(data_scale[data_label == cl], axis=0))
 
-    # calculate the within-class scatter matrix for unbalanced data
     within_class_scatter_matrix = np.zeros((data_scale.shape[1], data_scale.shape[1]))
     for cl, mv in zip(range(0, 2), mean_vectors):
         class_scatter = np.cov(data_scale[data_label == cl].T)
         within_class_scatter_matrix += class_scatter
-    # calculate the between-class scatter matrix
+
     overall_mean = np.mean(data_scale, axis=0)
     between_class_scatter_matrix = np.zeros((data_scale.shape[1], data_scale.shape[1]))
     for i, mean_vec in enumerate(mean_vectors):
@@ -809,8 +709,7 @@ def lda_analysis(data):
         mean_vec = mean_vec.reshape(data_scale.shape[1], 1)
         overall_mean = overall_mean.reshape(data_scale.shape[1], 1)
         between_class_scatter_matrix += n * (mean_vec - overall_mean).dot((mean_vec - overall_mean).T)
-        # print between class scatter matrix
-    # calculate the eigenvalues and eigenvectors
+
     eigen_values, eigen_vectors = np.linalg.eig(np.linalg.inv(within_class_scatter_matrix).dot(between_class_scatter_matrix))
     # sort the eigenvalues and eigenvectors
     eigen_pairs = [(np.abs(eigen_values[i]), eigen_vectors[:, i]) for i in range(len(eigen_values))]
@@ -825,12 +724,10 @@ def lda_analysis(data):
     def plot_function():
         plt.figure(figsize=(15, 10))
         sorted_importance.plot(kind='barh', color='coral')
-        # log scale
         plt.xscale('log')
         plt.title('LDA Coefficients for Features relationship with Class')
         plt.ylabel('Feature')
         plt.xlabel('Coefficient values')
-
     save_plot_as_png(plot_function, 'lda_coefficients')
 # Kernel Discriminant Analysis
 def sbs_analysis(data):
@@ -860,11 +757,7 @@ def sbs_analysis(data):
     data['sex_count'] = data['sex'].map(sex_map)
     country_map = data['country'].value_counts().to_dict()
     data['country_count'] = data['country'].map(country_map)
-
-    # drop unnecessary columns
     data = data.drop(['signup_time', 'purchase_time', 'device_id', 'user_id', 'source', 'browser', 'sex', 'country', 'purchase_year', 'signup_year', 'ip_address'], axis=1)
-
-    # select the same amount of raw of non fraud as fraud
     fraud_data = data[data['class'] == 1]
     not_fraud_data = data[data['class'] == 0]
     not_fraud_data = not_fraud_data.sample(n=fraud_data.shape[0], random_state=42)
@@ -912,31 +805,23 @@ def dendrogram_clustering(data):
     data['sex_count'] = data['sex'].map(sex_map)
     country_map = data['country'].value_counts().to_dict()
     data['country_count'] = data['country'].map(country_map)
-    # drop unnecessary columns
+
     data = data.drop(['signup_time', 'purchase_time', 'device_id', 'user_id', 'source', 'browser', 'sex', 'country', 'purchase_year', 'signup_year', 'ip_address'], axis=1)
-    # balance the data
     fraud_data = data[data['class'] == 1]
     not_fraud_data = data[data['class'] == 0]
     not_fraud_data = not_fraud_data.sample(n=fraud_data.shape[0], random_state=42)
     data_c = pd.concat([fraud_data, not_fraud_data])
-    # data that are not fraud
+
     features = data_c.drop('class', axis=1)
     labels = data_c['class']
-    # transpose the data
     features = features.T
-    # standardize the data
     scaler = StandardScaler()
     X = scaler.fit_transform(features)
-    # calculate the distance matrix
     distance_matrix = pdist(X, metric='euclidean')
-    # calculate the linkage matrix
     linkage_matrix = linkage(distance_matrix, method='complete')
-    # plot the dendrogram
     def plot_function():
         plt.figure(figsize=(20, 15))
         dendrogram(linkage_matrix, labels=features.index, orientation='left')
-
-
         plt.title('Dendrogram of Features')
         plt.ylabel('Features')
         plt.xlabel('Distance')

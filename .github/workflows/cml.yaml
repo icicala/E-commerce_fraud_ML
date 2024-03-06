@@ -1,0 +1,21 @@
+name: CML
+on: [push]
+jobs:
+  data-analyses-and-report:
+    runs-on: ubuntu-latest
+    container: ghcr.io/iterative/cml:0-dvc2-base1
+    steps:
+      - uses: actions/checkout@v3
+      - name: Train model
+        run: |
+          pip install -r requirements.txt
+          python univariate_descriptive_statistics_report.py
+          python univariate_graphical_report.py
+      - name: Write CML report
+        env:
+          REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Post reports as comments in GitHub PRs
+          cat report.txt >> report.md
+          echo "![](./purchase_value_histogram.png)" >> report.md
+          cml comment create report.md

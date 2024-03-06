@@ -332,7 +332,7 @@ if __name__ == '__main__':
     data_ip = read_data('IpAddress_to_Country.csv', delimiter=';')
 ######## Fraud_Data.csv ###########
     # Exploring data frames
-    #explore_data_frames(data_fraud)
+    explore_data_frames(data_fraud)
     # Missing values
     #missing_values(data_fraud)
     # Check null values
@@ -352,7 +352,7 @@ if __name__ == '__main__':
     # Check datetime format
     #check_datetime_format(data_fraud)
     # Descriptive statistics datetime
-    descriptive_statistics_datetime(data_fraud)
+    # descriptive_statistics_datetime(data_fraud)
 ######## IpAddress_to_Country.csv ###########
     # Check Ip Address data type
     #check_ip_address(data_ip)
