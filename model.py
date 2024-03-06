@@ -1,3 +1,4 @@
+import joblib
 import pandas as pd
 from imblearn.combine import SMOTEENN
 from matplotlib import pyplot as plt
@@ -85,17 +86,17 @@ if __name__ == '__main__':
     X_train, X_test = feature_scaling(X_train, X_test)
 ################## Random Forest Classifier ##################
     # class_weight='balanced',
-    # classifier = RandomForestClassifier(n_estimators=500, random_state=47, criterion='entropy', n_jobs=-1)
-    # classifier.fit(X_train, y_train)
-    # y_pred = classifier.predict(X_test)
-    # y_pred_probs = classifier.predict_proba(X_test)
-    # evaluate_model(y_test, y_pred, y_pred_probs)
+    classifier = RandomForestClassifier(n_estimators=500, random_state=47, criterion='entropy', n_jobs=-1)
+    classifier.fit(X_train, y_train)
+    y_pred = classifier.predict(X_test)
+    y_pred_probs = classifier.predict_proba(X_test)
+    evaluate_model(y_test, y_pred, y_pred_probs)
 ################## CatBoost Classifier ##################
-    # classifier = CatBoostClassifier(iterations=500, depth=15, learning_rate=0.01, loss_function='Logloss', random_seed=47, l2_leaf_reg = 3)
-    # classifier.fit(X_train, y_train)
-    # y_pred = classifier.predict(X_test)
-    # y_pred_probs = classifier.predict_proba(X_test)
-    # # evaluate_model(y_test, y_pred, y_pred_probs)
+    classifier = CatBoostClassifier(iterations=500, depth=15, learning_rate=0.01, loss_function='Logloss', random_seed=47, l2_leaf_reg = 3)
+    classifier.fit(X_train, y_train)
+    y_pred = classifier.predict(X_test)
+    y_pred_probs = classifier.predict_proba(X_test)
+    # evaluate_model(y_test, y_pred, y_pred_probs)
 
 ################ Long Short Term Memory ################
     X_train = X_train.reshape((X_train.shape[0], 1, X_train.shape[1]))
@@ -140,6 +141,8 @@ if __name__ == '__main__':
     # history = autoencoder.fit(X_train, X_train, epochs=10, batch_size=70, validation_data=(X_test, X_test), verbose=2, shuffle=False)
 
 
+    # save the model
+    joblib.dump(classifier, 'RFC_model.joblib')
 
 
 
